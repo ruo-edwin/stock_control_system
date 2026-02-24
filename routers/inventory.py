@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Form, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from datetime import datetime
 from backend import models
 from backend.db import SessionLocal
 from backend.auth_utils import verify_token
@@ -9,8 +8,8 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from backend.config import templates
 
 
-
 router = APIRouter(prefix="/inventory", tags=["inventory"])
+
 
 def get_db():
     db = SessionLocal()
@@ -18,7 +17,6 @@ def get_db():
         yield db
     finally:
         db.close()
-
 
 
 @router.get("/product_stock/{product_id}")
@@ -37,6 +35,7 @@ def get_product_stock(
 
     return JSONResponse({"stock": total_stock})
 
+
 @router.get("/overview", response_class=HTMLResponse)
 def inventory_overview(
     request: Request,
@@ -47,7 +46,6 @@ def inventory_overview(
     if current_user.role not in ["admin", "manager"]:
         raise HTTPException(status_code=403, detail="Not authorized")
 
-    # Subquery to calculate stock per product
     stock_data = db.query(
         models.Product.id,
         models.Product.name,
@@ -70,6 +68,7 @@ def inventory_overview(
             "stock_data": stock_data
         }
     )
+
 
 @router.get("/assign", response_class=HTMLResponse)
 def assign_page(
@@ -105,6 +104,8 @@ def assign_page(
             "movements": movements
         }
     )
+
+
 @router.get("/restock", response_class=HTMLResponse)
 def restock_page(
     request: Request,
@@ -112,8 +113,8 @@ def restock_page(
     db: Session = Depends(get_db)
 ):
 
-   if current_user.role not in ["admin", "manager"]:
-     raise HTTPException(status_code=403, detail="Not authorized")
+    if current_user.role not in ["admin", "manager"]:
+        raise HTTPException(status_code=403, detail="Not authorized")
 
     products = db.query(models.Product).filter(
         models.Product.business_id == current_user.business_id
@@ -151,7 +152,6 @@ def assign_stock(
     if quantity <= 0:
         raise HTTPException(status_code=400, detail="Quantity must be greater than zero")
 
-    # Validate staff
     staff = db.query(models.Staff).filter(
         models.Staff.id == staff_id,
         models.Staff.branch_id == current_user.branch_id,
@@ -161,7 +161,6 @@ def assign_stock(
     if not staff:
         raise HTTPException(status_code=400, detail="Invalid staff")
 
-    # Validate product (business-level only)
     product = db.query(models.Product).filter(
         models.Product.id == product_id,
         models.Product.business_id == current_user.business_id
@@ -170,7 +169,6 @@ def assign_stock(
     if not product:
         raise HTTPException(status_code=400, detail="Invalid product")
 
-    # Calculate stock
     current_stock = db.query(
         func.coalesce(func.sum(models.StockMovement.quantity), 0)
     ).filter(
@@ -182,7 +180,6 @@ def assign_stock(
     if current_stock < quantity:
         raise HTTPException(status_code=400, detail="Not enough stock")
 
-    # Create movement
     movement = models.StockMovement(
         business_id=current_user.business_id,
         branch_id=current_user.branch_id,
@@ -199,6 +196,7 @@ def assign_stock(
 
     return {"message": "Stock assigned successfully"}
 
+
 @router.post("/restock")
 def restock_product(
     product_id: int = Form(...),
@@ -211,7 +209,7 @@ def restock_product(
 ):
 
     if current_user.role not in ["admin", "manager"]:
-      raise HTTPException(status_code=403, detail="Not authorized")
+        raise HTTPException(status_code=403, detail="Not authorized")
 
     if quantity <= 0:
         raise HTTPException(status_code=400, detail="Quantity must be greater than zero")
