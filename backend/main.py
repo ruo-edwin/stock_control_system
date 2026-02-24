@@ -61,7 +61,7 @@ app.mount("/static", StaticFiles(directory="backend/static"), name="static")
 
 # ✅ CORS
 origins = [
-    "https://pos-10-production.up.railway.app",
+    "https://stockcontrolsystem-production-f16c.up.railway.app/",
     "http://localhost:3000"
 ]
 app.add_middleware(
