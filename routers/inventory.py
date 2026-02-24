@@ -36,7 +36,7 @@ def get_product_stock(
     ).scalar()
 
     return JSONResponse({"stock": total_stock})
-    
+
 @router.get("/overview", response_class=HTMLResponse)
 def inventory_overview(
     request: Request,
@@ -113,7 +113,7 @@ def restock_page(
 ):
 
    if current_user.role not in ["admin", "manager"]:
-    raise HTTPException(status_code=403, detail="Not authorized")
+     raise HTTPException(status_code=403, detail="Not authorized")
 
     products = db.query(models.Product).filter(
         models.Product.business_id == current_user.business_id
@@ -211,7 +211,7 @@ def restock_product(
 ):
 
     if current_user.role not in ["admin", "manager"]:
-    raise HTTPException(status_code=403, detail="Not authorized")
+      raise HTTPException(status_code=403, detail="Not authorized")
 
     if quantity <= 0:
         raise HTTPException(status_code=400, detail="Quantity must be greater than zero")
