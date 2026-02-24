@@ -1,5 +1,6 @@
 from dotenv import load_dotenv
 import os
+from backend.db import SessionLocal
 from datetime import datetime, timedelta
 from jose import jwt , JWTError
 from fastapi import Depends, HTTPException, Request
