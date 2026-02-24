@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- PWA -->
+  <link rel="manifest" href="/static/manifest.json">
+  <meta name="theme-color" content="#635bff">
+
+  <!-- iOS support -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="SmartPOS">
+  <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
+
+  <title>Record Sales | SmartPOS</title>
+
+  <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+
+  <style>
+    :root {
+      --bg-body: #eef2f7;
+      --bg-card: #ffffff;
+      --border-soft: rgba(0,0,0,0.08);
+      --accent: #4f46e5;
+      --accent-strong: #6366f1;
+      --text-main: #1f2937;
+      --shadow-soft: 0 12px 30px rgba(0,0,0,0.08);
+      --radius: 14px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: "Inter", system-ui, sans-serif;
+      background: linear-gradient(135deg, #f7f9fc, #e3e7f0);
+      margin: 0;
+      padding: 24px;
+      display: flex;
+      justify-content: center;
+      color: var(--text-main);
+    }
+
+    .container { max-width: 1100px; width: 100%; }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 25px;
+      font-size: 2rem;
+      background: linear-gradient(120deg, #1f2937, #6366f1);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+    }
+
+    /* ✅ Onboarding banner (only shows in onboarding mode) */
+    .onboarding-banner {
+      display: none;
+      background: rgba(79, 70, 229, 0.08);
+      border: 1px solid rgba(79, 70, 229, 0.18);
+      padding: 14px 16px;
+      border-radius: 14px;
+      box-shadow: 0 10px 22px rgba(0,0,0,0.06);
+      margin: 0 auto 18px;
+      max-width: 980px;
+    }
+    .onboarding-banner strong { color: var(--accent); }
+
+    /* ✅ Post-sale CTA (only onboarding mode, after success) */
+    .cta-row {
+      display: none;
+      text-align: center;
+      margin-top: 14px;
+    }
+    .cta-row a {
+      display: inline-block;
+      text-align: center;
+      margin: 0;
+      color: white;
+      text-decoration: none;
+      padding: 12px 20px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+    }
+
+    .order-info {
+      background: var(--bg-card);
+      padding: 18px;
+      border-radius: var(--radius);
+      margin-bottom: 25px;
+      box-shadow: var(--shadow-soft);
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    .order-info input {
+      flex: 1;
+      padding: 12px;
+      min-width: 230px;
+      border-radius: 999px;
+      border: 1px solid var(--border-soft);
+    }
+
+    .table-wrapper {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      padding: 10px;
+      box-shadow: var(--shadow-soft);
+      overflow-x: auto;
+    }
+
+    table { width: 100%; min-width: 900px; border-collapse: collapse; }
+
+    th {
+      background: #f3f4f6;
+      padding: 14px;
+      font-size: 0.75rem;
+    }
+
+    td {
+      padding: 12px;
+      text-align: center;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    td input {
+      width: 100%;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid var(--border-soft);
+      text-align: center;
+    }
+
+    td input[readonly] { background: #f3f4f6; }
+
+    .btn-row { text-align: center; margin-top: 22px; }
+
+    button {
+      padding: 12px 24px;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+      color: white;
+    }
+
+    .total {
+      text-align: center;
+      font-size: 1.5rem;
+      margin-top: 20px;
+      font-weight: 600;
+    }
+
+    #message { text-align: center; margin-top: 15px; font-weight: 600; }
+
+    a {
+      display: block;
+      text-align: center;
+      margin-top: 25px;
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .popup-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+
+    .popup-box {
+      background: white;
+      padding: 25px;
+      border-radius: 14px;
+      width: 90%;
+      max-width: 360px;
+      text-align: center;
+    }
+
+    .popup-buttons button { margin: 10px; }
+    
+    /* Hide mobile-only UI by default (desktop/tablet) */
+    .mobile-optional,
+    .mobile-bottom-bar {
+      display: none;
+    }
+    /* ============================================================
+       ✅✅✅ MOBILE-ONLY ADJUSTMENTS (CHANGE NOTHING ELSE)
+   
+       ============================================================ */
+    @media (max-width: 768px) {
+       .mobile-optional { display: block; }
+       .mobile-bottom-bar { display: block; }
+      body {
+        padding: 14px;
+      }
+
+      h1 {
+        font-size: 1.6rem;
+        margin-bottom: 14px;
+      }
+
+      /* Give space for fixed bottom bar */
+      .container {
+        padding-bottom: 86px;
+      }
+
+      /* --- Hide the top optional fields block on mobile (we'll show a toggle instead) --- */
+      .order-info {
+        display: none;
+      }
+
+      /* Mobile "optional" collapsible */
+      .mobile-optional {
+        background: var(--bg-card);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-soft);
+        border: 1px solid rgba(0,0,0,0.04);
+        padding: 10px 12px;
+        margin: 0 auto 14px;
+        max-width: 980px;
+      }
+      .mobile-optional summary {
+        list-style: none;
+        cursor: pointer;
+        font-weight: 700;
+        color: var(--text-main);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 8px 6px;
+      }
+      .mobile-optional summary::-webkit-details-marker { display: none; }
+      .mobile-optional summary .hint {
+        font-weight: 600;
+        color: #6b7280;
+        font-size: 0.92rem;
+      }
+      .mobile-optional .fields {
+        margin-top: 10px;
+        display: grid;
+        gap: 10px;
+      }
+      .mobile-optional input {
+        width: 100%;
+        padding: 12px;
+        border-radius: 999px;
+        border: 1px solid var(--border-soft);
+      }
+
+      /* --- Product area: stop horizontal scroll table on mobile --- */
+      .table-wrapper {
+        overflow: visible;
+        padding: 12px;
+      }
+      table {
+        min-width: 0;
+        width: 100%;
+      }
+      thead { display: none; }
+
+      /* Turn each row into a card */
+      tbody#salesBody tr {
+        display: block;
+        background: #fff;
+        border: 1px solid rgba(0,0,0,0.06);
+        border-radius: 16px;
+        padding: 12px;
+        margin: 10px 0;
+        box-shadow: 0 10px 18px rgba(0,0,0,0.06);
+      }
+
+      tbody#salesBody td {
+        display: block;
+        width: 100%;
+        padding: 6px 0;
+        border-bottom: none;
+        text-align: left;
+      }
+
+      /* Full-width inputs */
+      tbody#salesBody td input {
+        text-align: left;
+        padding: 12px;
+        border-radius: 14px;
+      }
+
+      /* Label each field using data-label attributes */
+      tbody#salesBody td::before {
+        content: attr(data-label);
+        display: block;
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: #6b7280;
+        margin: 0 0 6px 2px;
+      }
+
+      /* Make delete button full-width, clear */
+      tbody#salesBody td .row-del {
+        width: 100%;
+        padding: 12px 14px;
+        border-radius: 14px;
+        background: rgba(239, 68, 68, 0.10);
+        color: #b91c1c;
+        border: 1px solid rgba(239, 68, 68, 0.20);
+        font-weight: 700;
+      }
+
+      /* Add item button: full width on mobile */
+      .btn-row button {
+        width: 100%;
+        padding: 14px 16px;
+        font-size: 1.02rem;
+      }
+
+      /* Hide the mid-page total + record button on mobile (we use fixed bar) */
+      .total {
+        display: none;
+      }
+      .btn-row.record-sale-row {
+        display: none;
+      }
+
+      /* Fixed bottom bar */
+      .mobile-bottom-bar {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255,255,255,0.92);
+        backdrop-filter: blur(10px);
+        border-top: 1px solid rgba(0,0,0,0.08);
+        padding: 10px 12px;
+        z-index: 9998;
+      }
+      .mobile-bottom-inner {
+        max-width: 1100px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 1fr 1.2fr;
+        gap: 10px;
+        align-items: center;
+      }
+      .mobile-total {
+        font-weight: 800;
+        font-size: 1.05rem;
+        line-height: 1.1;
+      }
+      .mobile-total small {
+        display: block;
+        color: #6b7280;
+        font-weight: 700;
+        font-size: 0.78rem;
+        margin-bottom: 2px;
+      }
+      .mobile-bottom-inner button {
+        width: 100%;
+        padding: 14px 16px;
+        font-size: 1.02rem;
+      }
+
+      /* Make back link more reachable but keep your layout */
+      a.back-link {
+        margin-top: 16px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+<div class="container">
+
+<h1>Record Sales</h1>
+
+<!-- ✅ Onboarding banner -->
+<div class="onboarding-banner" id="onboardingBanner">
+  <div><strong>Step 2 of 4:</strong> Record your first Demo sale to see profit instantly.</div>
+  <div style="margin-top:6px; color:#6b7280; font-size:0.95rem;">
+    Add 1 product, enter quantity, then tap <strong>Record Sale</strong>.
+  </div>
+</div>
+
+<!-- ✅ MOBILE-ONLY: optional fields collapsible (desktop keeps existing .order-info) -->
+<details class="mobile-optional" id="mobileOptional">
+  <summary>
+    <span>+ Add customer / seller <span class="hint">(optional)</span></span>
+    <span style="color:#6b7280; font-weight:800;">▾</span>
+  </summary>
+  <div class="fields">
+    <input id="clientNameMobile" placeholder="Customer Name (optional)">
+    <input id="salesPersonMobile" placeholder="Sold By (optional)">
+  </div>
+</details>
+
+<!-- Desktop original (hidden on mobile via CSS) -->
+<div class="order-info">
+  <input id="clientName" placeholder="Customer Name (optional)">
+  <input id="salesPerson" placeholder="Sold By (optional)">
+</div>
+
+<div class="table-wrapper">
+<table>
+<thead>
+<tr>
+<th>Product</th><th>Price</th><th>Stock</th><th>Qty</th><th>Total</th><th></th>
+</tr>
+</thead>
+<tbody id="salesBody"></tbody>
+</table>
+</div>
+
+<div class="btn-row">
+<button onclick="addRow()">➕ Add Item</button>
+</div>
+
+<!-- Desktop total (hidden on mobile) -->
+<p class="total">Total Sale: Ksh <span id="grandTotal">0.00</span></p>
+
+<!-- Desktop record sale (hidden on mobile) -->
+<div class="btn-row record-sale-row">
+<button onclick="submitSale()">✅ Record Sale</button>
+</div>
+
+<p id="message"></p>
+
+<!-- ✅ Onboarding CTA -->
+<div class="cta-row" id="profitCta">
+  <a href="/sales/salesreport?source=onboarding">📊 View Profit Report</a>
+</div>
+
+<a class="back-link" href="/auth/dashboard">⬅ Back</a>
+
+</div>
+
+<!-- ✅ MOBILE-ONLY fixed bar (desktop ignores it visually due to spacing + UX) -->
+<div class="mobile-bottom-bar">
+  <div class="mobile-bottom-inner">
+    <div class="mobile-total">
+      <small>Total</small>
+      Ksh <span id="grandTotalMobile">0.00</span>
+    </div>
+    <button onclick="submitSale()">✅ Record Sale</button>
+  </div>
+</div>
+
+<div id="confirmPopup" class="popup-overlay">
+  <div class="popup-box">
+    <p id="popupText"></p>
+    <hr>
+    <h4>Mode of Payment</h4>
+    <input id="mpesaAmount" type="number" placeholder="MPESA Amount" oninput="recalculatePayment()">
+    <input id="cashAmount" type="number" placeholder="Cash Amount" oninput="recalculatePayment()">
+    <p>Change: Ksh <span id="changeAmount">0.00</span></p>
+    <div class="popup-buttons">
+      <button onclick="approveSale()">Approve</button>
+      <button onclick="closePopup()">Decline</button>
+    </div>
+  </div>
+</div>
+
+<datalist id="productList"></datalist>
+
+<script>
+const baseURL = "https://pos-10-production.up.railway.app";
+let allProducts = [];
+let mpesa = 0, cash = 0;
+
+// ✅ Detect onboarding mode
+const params = new URLSearchParams(window.location.search);
+const isOnboarding = params.get("source") === "onboarding";
+
+// ✅ Show onboarding banner if needed
+const onboardingBanner = document.getElementById("onboardingBanner");
+if (isOnboarding && onboardingBanner) onboardingBanner.style.display = "block";
+
+async function loadProducts() {
+  const res = await fetch(`${baseURL}/products/`, { credentials: "include" });
+  allProducts = await res.json();
+
+  productList.innerHTML = allProducts
+    .map(p => `<option value="${p.name}"></option>`)
+    .join("");
+
+  addRow();
+}
+
+function addRow() {
+  const row = document.createElement("tr");
+  row.innerHTML = `
+    <td data-label="Product">
+      <input list="productList" placeholder="Search product…" oninput="updateProduct(this)">
+    </td>
+    <td data-label="Price">
+     <td data-label="Price">
+  <input class="price" type="number" min="0"
+    onfocus="clearPrice(this)"
+    onblur="restoreMinPrice(this)">
+</td>
+    </td>
+    <td data-label="Stock">
+      <input class="stock" readonly>
+    </td>
+    <td data-label="Qty">
+      <input class="qty" type="number" min="1" oninput="updateTotal(this)">
+    </td>
+    <td data-label="Total">
+      <input class="lineTotal" readonly>
+    </td>
+    <td data-label="Remove">
+      <button class="row-del" onclick="this.closest('tr').remove();updateGrandTotal()">🗑 Remove Item</button>
+    </td>
+  `;
+  salesBody.appendChild(row);
+}
+
+function updateProduct(input) {
+  const p = allProducts.find(
+    x => x.name.toLowerCase() === input.value.toLowerCase()
+  );
+  if (!p) return;
+
+  const r = input.closest("tr");
+  r.querySelector(".price").value = p.price;
+  r.querySelector(".price").dataset.minPrice = p.buying_price;
+  r.querySelector(".stock").value = p.quantity;
+}
+
+function validatePrice(input) {
+  const min = +input.dataset.minPrice || 0;
+  if (+input.value < min) input.value = min;
+  updateTotal(input.closest("tr").querySelector(".qty"));
+}
+
+function updateTotal(q) {
+  const r = q.closest("tr");
+  const price = +r.querySelector(".price").value || 0;
+  const stock = +r.querySelector(".stock").value || 0;
+  if (q.value > stock) q.value = stock;
+  r.querySelector(".lineTotal").value = (price * q.value).toFixed(2);
+  updateGrandTotal();
+}
+
+function updateGrandTotal() {
+  let t = 0;
+  document.querySelectorAll(".lineTotal").forEach(i => t += +i.value || 0);
+  grandTotal.textContent = t.toFixed(2);
+
+  // ✅ Keep mobile bar total in sync (desktop unchanged)
+  const gtM = document.getElementById("grandTotalMobile");
+  if (gtM) gtM.textContent = t.toFixed(2);
+}
+
+/* ✅ MOBILE: keep optional mobile inputs synced to existing IDs
+   so backend payload remains unchanged */
+function syncOptionalFields() {
+  const isMobile = window.matchMedia("(max-width: 768px)").matches;
+  if (!isMobile) return;
+
+  const cnM = document.getElementById("clientNameMobile");
+  const spM = document.getElementById("salesPersonMobile");
+  if (!cnM || !spM) return;
+
+  // Keep desktop hidden inputs updated
+  cnM.addEventListener("input", () => { clientName.value = cnM.value; });
+  spM.addEventListener("input", () => { salesPerson.value = spM.value; });
+
+  // If desktop already has something (rare), populate mobile
+  if (clientName.value && !cnM.value) cnM.value = clientName.value;
+  if (salesPerson.value && !spM.value) spM.value = salesPerson.value;
+}
+function clearPrice(input) {
+  input.dataset.originalValue = input.value;
+  input.value = "";
+}
+
+function finalizePrice(input) {
+  const min = +input.dataset.minPrice || 0;
+
+  if (!input.value) {
+    input.value = min;
+  } else if (+input.value < min) {
+    input.value = min;
+  }
+
+  // update totals after validation
+  updateTotal(input.closest("tr").querySelector(".qty"));
+}
+function submitSale() {
+  const items = [];
+  document.querySelectorAll("#salesBody tr").forEach(r => {
+    const name = r.querySelector("input[list]").value;
+    const q = +r.querySelector(".qty").value;
+    const price = +r.querySelector(".price").value;
+    if (name && q > 0) items.push({ product_name: name, quantity: q, selling_price: price });
+  });
+
+  if (!items.length) return alert("Add at least one product");
+
+  popupText.innerHTML =
+    `<strong style="font-size:1.3rem">Confirm order of Ksh ${Number(grandTotal.textContent).toLocaleString()}</strong>`;
+
+  confirmPopup.style.display = "flex";
+
+  window.pendingSale = {
+    client_name: clientName.value || null,
+    sales_person: salesPerson.value || null,
+    items
+  };
+}
+
+function closePopup() {
+  confirmPopup.style.display = "none";
+}
+
+function recalculatePayment() {
+  mpesa = +mpesaAmount.value || 0;
+  cash = +cashAmount.value || 0;
+  const change = (mpesa + cash) - (+grandTotal.textContent);
+  changeAmount.textContent = change > 0 ? change.toFixed(2) : "0.00";
+}
+
+async function approveSale() {
+  if (mpesa + cash < +grandTotal.textContent)
+    return alert("Total paid is less than sale amount");
+
+  closePopup();
+
+  // ✅ NEW: pass onboarding source to backend only when onboarding
+  const postUrl = `${baseURL}/sales/record_sale/${isOnboarding ? "?source=onboarding" : ""}`;
+
+  const res = await fetch(postUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(window.pendingSale)
+  });
+
+  const out = await res.json().catch(() => ({}));
+
+  if (res.ok) {
+    const total = Number(out.total_amount || grandTotal.textContent || 0);
+
+    message.style.color = "green";
+
+    if (isOnboarding) {
+      const demoLine = out.is_demo
+        ? `<div style="margin-top:8px; color:#6b7280; font-weight:600;">
+             🧪 This was a <strong>demo sale</strong>. Your stock was <strong>NOT</strong> reduced.
+             When you record your next sale, this demo will disappear automatically.
+           </div>`
+        : ``;
+
+      message.innerHTML = `
+        ✅ First sale recorded!<br>
+        <span style="color:#6b7280; font-weight:600;">
+          Order: <strong>${out.order_code || "-"}</strong> • Total: <strong>Ksh ${total.toLocaleString()}</strong><br>
+          Now tap <strong>View Profit Report</strong> below 👇
+        </span>
+        ${demoLine}
+      `;
+
+      const cta = document.getElementById("profitCta");
+      if (cta) cta.style.display = "block";
+    } else {
+      message.textContent = "Sale recorded successfully!";
+    }
+
+    salesBody.innerHTML = "";
+    addRow();
+    updateGrandTotal();
+  } else {
+    message.style.color = "red";
+    message.textContent = out.detail || "Error recording sale";
+  }
+}
+
+loadProducts();
+syncOptionalFields();
+
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/static/service-worker.js")
+    .then(() => console.log("Service Worker registered"))
+    .catch(err => console.error("SW registration failed:", err));
+}
+</script>
+
+</body>
+</html>

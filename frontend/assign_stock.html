@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+
+{% block title %}Assign Stock | SmartPOS{% endblock %}
+
+{% block content %}
+
+<style>
+.header {
+    margin-bottom: 30px;
+}
+
+.header h1 {
+    font-size: 22px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.header p {
+    font-size: 14px;
+    color: var(--muted);
+    margin-top: 6px;
+}
+
+.layout {
+    display: grid;
+    grid-template-columns: 400px 1fr;
+    gap: 24px;
+}
+
+.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+}
+
+.card h2 {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+
+.form-group {
+    margin-bottom: 16px;
+}
+
+label {
+    font-size: 13px;
+    color: var(--muted);
+    display: block;
+    margin-bottom: 6px;
+}
+
+input, select, textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    font-size: 14px;
+}
+
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(99,91,255,0.08);
+}
+
+.stock-info {
+    background: #f1f5ff;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    margin-top: 6px;
+}
+
+button {
+    padding: 10px 18px;
+    border-radius: 8px;
+    border: none;
+    background: var(--primary);
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+button:hover {
+    opacity: 0.95;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 14px 8px;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+}
+
+thead {
+    font-size: 12px;
+    color: var(--muted);
+    text-align: left;
+}
+
+.movement-type {
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    background: rgba(99,91,255,0.1);
+    color: var(--primary);
+}
+
+@media (max-width: 900px) {
+    .layout {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<div class="header">
+    <h1>Assign Stock</h1>
+    <p>Issue products to staff members from branch inventory.</p>
+</div>
+
+<div class="layout">
+
+    <!-- ASSIGN FORM -->
+    <div class="card">
+        <h2>Issue Product</h2>
+
+        <form method="POST" action="/inventory/assign_stock">
+
+            <div class="form-group">
+                <label>Select Product</label>
+                <select name="product_id" required>
+                    <option value="">Select product</option>
+                    {% for product in products %}
+                        <option value="{{ product.id }}">
+                            {{ product.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+               <div class="stock-info">
+                    Available Stock:
+                    <strong id="stockDisplay">Select product</strong>
+               </div>
+            </div>
+
+            <div class="form-group">
+                <label>Select Staff</label>
+                <select name="staff_id" required>
+                    <option value="">Select staff</option>
+                    {% for staff in staff_list %}
+                        <option value="{{ staff.id }}">
+                            {{ staff.full_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Quantity</label>
+                <input type="number" name="quantity" min="1" required>
+            </div>
+
+            <div class="form-group">
+                <label>Notes (optional)</label>
+                <textarea name="notes" rows="3"></textarea>
+            </div>
+
+            <button type="submit">Assign Stock</button>
+        </form>
+    </div>
+
+    <!-- RECENT MOVEMENTS -->
+    <div class="card">
+        <h2>Recent Movements</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Staff</th>
+                    <th>Qty</th>
+                    <th>Type</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for movement in movements %}
+                <tr>
+                    <td>{{ movement.product.name }}</td>
+                    <td>{{ movement.staff.full_name if movement.staff else "-" }}</td>
+                    <td>{{ movement.quantity }}</td>
+                    <td>
+                        <span class="movement-type">
+                            {{ movement.movement_type }}
+                        </span>
+                    </td>
+                    <td>{{ movement.created_at }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+    </div>
+
+</div>
+<script>
+const productSelect = document.querySelector("select[name='product_id']");
+const stockDisplay = document.getElementById("stockDisplay");
+const assignButton = document.querySelector("button[type='submit']");
+
+productSelect.addEventListener("change", function () {
+    const productId = this.value;
+
+    if (!productId) {
+        stockDisplay.innerText = "Select product";
+        assignButton.disabled = true;
+        return;
+    }
+
+    fetch(`/inventory/product_stock/${productId}`)
+        .then(res => res.json())
+        .then(data => {
+
+            stockDisplay.innerText = data.stock;
+
+            if (data.stock <= 0) {
+                assignButton.disabled = true;
+                assignButton.innerText = "No Stock Available";
+            } else {
+                assignButton.disabled = false;
+                assignButton.innerText = "Assign Stock";
+            }
+        })
+        .catch(err => {
+            stockDisplay.innerText = "Error";
+            assignButton.disabled = true;
+        });
+});
+</script>
+{% endblock %}

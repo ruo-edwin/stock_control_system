@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- PWA -->
+  <link rel="manifest" href="/static/manifest.json">
+  <meta name="theme-color" content="#635bff">
+
+  <!-- iOS support -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="SmartPOS">
+  <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
+
+  <title>Superadmin Dashboard | SmartPOS</title>
+
+  <!-- Stripe Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    :root {
+      --stripe-primary: #635bff;
+      --stripe-primary-2: #4f46e5;
+      --stripe-dark: #111827;
+      --stripe-muted: #6b7280;
+      --stripe-light-bg: #eef2f7;
+      --card-border: rgba(17,24,39,0.10);
+      --row-hover: rgba(99,91,255,0.06);
+
+      --badge-trial: #00bcd4;
+      --badge-active: #28c76f;
+      --badge-expired: #ffa726;
+      --badge-suspended: #ef5350;
+
+      --shadow-soft: 0 12px 30px rgba(0,0,0,0.08);
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: radial-gradient(900px 420px at 10% 0%, rgba(99,91,255,0.16), transparent 60%),
+                  radial-gradient(900px 420px at 90% 0%, rgba(40,199,111,0.10), transparent 60%),
+                  var(--stripe-light-bg);
+      margin: 0;
+      padding: 0;
+      color: var(--stripe-dark);
+    }
+
+    /* PAGE WRAPPER */
+    .page-wrap {
+      max-width: 1200px;
+      margin: 36px auto 60px;
+      padding: 0 14px;
+    }
+
+    /* HEADER */
+    .topbar {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .title-block h2 {
+      margin: 0;
+      font-size: 1.85rem;
+      font-weight: 800;
+      letter-spacing: -0.6px;
+      color: var(--stripe-dark);
+      line-height: 1.15;
+    }
+
+    .title-block p {
+      margin: 6px 0 0;
+      color: var(--stripe-muted);
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(99,91,255,0.10);
+      border: 1px solid rgba(99,91,255,0.18);
+      color: var(--stripe-primary-2);
+      font-weight: 700;
+      font-size: 0.85rem;
+      white-space: nowrap;
+    }
+
+    .pill-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--stripe-primary);
+      box-shadow: 0 0 0 4px rgba(99,91,255,0.20);
+    }
+
+    /* MAIN CARD */
+    .main-card {
+      background: rgba(255,255,255,0.92);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-soft);
+      overflow: hidden;
+    }
+
+    .card-head {
+      padding: 16px 18px;
+      border-bottom: 1px solid rgba(17,24,39,0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .card-head .left {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .card-head .left .label {
+      font-weight: 800;
+      color: var(--stripe-dark);
+      letter-spacing: -0.2px;
+    }
+
+    .card-head .left .hint {
+      color: var(--stripe-muted);
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    /* TABLE */
+    .table-wrap {
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    table.table {
+      margin: 0;
+      min-width: 980px;
+    }
+
+    thead {
+      background: rgba(17,24,39,0.03);
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      backdrop-filter: blur(6px);
+    }
+
+    thead th {
+      font-weight: 800;
+      font-size: 0.78rem;
+      padding: 14px 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      color: rgba(17,24,39,0.72);
+      border-bottom: 1px solid rgba(17,24,39,0.10) !important;
+      white-space: nowrap;
+    }
+
+    tbody td {
+      padding: 14px;
+      font-size: 0.92rem;
+      color: rgba(17,24,39,0.92);
+      border-bottom: 1px solid rgba(17,24,39,0.06);
+      vertical-align: middle;
+    }
+
+    tbody tr:hover {
+      background: var(--row-hover);
+      transition: 0.2s;
+    }
+
+    .mono {
+      font-variant-numeric: tabular-nums;
+      font-feature-settings: "tnum";
+    }
+
+    /* BADGES */
+    .badge-status {
+      padding: 7px 12px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 800;
+      color: white;
+      letter-spacing: 0.2px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    .badge-status::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.9);
+      opacity: 0.9;
+    }
+
+    .trial { background: var(--badge-trial); }
+    .active { background: var(--badge-active); }
+    .expired { background: var(--badge-expired); color: #111827 !important; }
+    .expired::before { background: rgba(17,24,39,0.85); }
+    .suspended { background: var(--badge-suspended); }
+
+    /* BUTTONS */
+    .action-btn {
+      padding: 7px 12px !important;
+      border-radius: 10px !important;
+      font-size: 0.82rem !important;
+      font-weight: 800 !important;
+      border: 1px solid rgba(17,24,39,0.08) !important;
+      box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+      transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
+      white-space: nowrap;
+    }
+
+    .action-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 18px rgba(0,0,0,0.10);
+      filter: brightness(0.98);
+    }
+
+    .btn-success { background: var(--badge-active) !important; }
+    .btn-primary { background: var(--stripe-primary) !important; }
+    .btn-danger { background: var(--badge-suspended) !important; }
+    .btn-warning { background: var(--badge-expired) !important; color: #111827 !important; }
+
+    /* Details row (expanded) */
+    .details-row td {
+      padding: 0 !important;
+      border-bottom: 1px solid rgba(17,24,39,0.06);
+      background: rgba(17,24,39,0.02);
+    }
+
+    .details-panel {
+      padding: 14px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+
+    .metric-chips {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: rgba(99,91,255,0.10);
+      border: 1px solid rgba(99,91,255,0.18);
+      color: var(--stripe-dark);
+      font-weight: 800;
+      font-size: 0.82rem;
+      white-space: nowrap;
+    }
+
+    .chip span {
+      color: var(--stripe-muted);
+      font-weight: 800;
+      margin-right: 6px;
+    }
+
+    .quick-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .qa-btn {
+      border-radius: 999px !important;
+      padding: 7px 10px !important;
+      font-weight: 800 !important;
+      font-size: 0.8rem !important;
+      border: 1px solid rgba(17,24,39,0.10) !important;
+      background: rgba(255,255,255,0.85) !important;
+    }
+    .qa-btn:hover { background: rgba(99,91,255,0.08) !important; }
+
+    /* Mobile cards */
+    .card-list {
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .client-card {
+      background: rgba(255,255,255,0.95);
+      border: 1px solid rgba(17,24,39,0.10);
+      border-radius: 16px;
+      box-shadow: 0 10px 22px rgba(0,0,0,0.06);
+      padding: 14px;
+    }
+
+    .client-card .top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .client-card .biz {
+      font-weight: 900;
+      letter-spacing: -0.2px;
+    }
+
+    .client-card .meta {
+      color: var(--stripe-muted);
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin-top: 4px;
+    }
+
+    .client-card .stats {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .client-card .stats .chip { background: rgba(17,24,39,0.04); border-color: rgba(17,24,39,0.08); }
+    .client-card .stats .chip span { color: rgba(17,24,39,0.55); }
+
+    .client-card .bottom {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Modal small polish */
+    .modal-content {
+      border-radius: 16px !important;
+      border: 1px solid rgba(17,24,39,0.10) !important;
+      box-shadow: 0 20px 55px rgba(0,0,0,0.18) !important;
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 900px) {
+      .topbar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .pill { align-self: flex-start; }
+      .title-block h2 { font-size: 1.65rem; }
+    }
+
+    /* Make dropdown items readable */
+    .dropdown-menu {
+      border-radius: 14px;
+      border: 1px solid rgba(17,24,39,0.10);
+      box-shadow: 0 14px 30px rgba(0,0,0,0.12);
+      overflow: hidden;
+    }
+    .dropdown-item {
+      font-weight: 700;
+      padding: 10px 12px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="page-wrap">
+
+    <div class="topbar">
+      <div class="title-block">
+        <h2>Superadmin Client Management</h2>
+        <p>Manage subscriptions, monitor activity, and take action from one place.</p>
+      </div>
+
+      <div class="pill">
+        <span class="pill-dot"></span>
+        SmartPOS Superadmin
+      </div>
+    </div>
+
+    <div class="main-card">
+      <div class="card-head">
+        <div class="left">
+          <div class="label">Clients</div>
+          <div class="hint">Clean table + expandable details (products, last sale, revenue).</div>
+        </div>
+      </div>
+
+      <!-- Desktop/Table -->
+      <div class="table-wrap d-none d-md-block">
+        <table class="table align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Business</th>
+              <th>Owner</th>
+              <th>Phone</th>
+              <th>Last Login</th>
+              <th>Subscription</th>
+              <th>Days Left</th>
+              <th>Status</th>
+              <!-- ✅ ADDED -->
+              <th>Installed</th>
+              <th style="width: 220px;">Controls</th>
+            </tr>
+          </thead>
+
+          <tbody id="clientTable"></tbody>
+        </table>
+      </div>
+
+      <!-- Mobile/Cards -->
+      <div class="d-block d-md-none">
+        <div class="card-list" id="clientCards"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Send Reminder Modal -->
+  <div class="modal fade" id="reminderModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Send Reminder</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body">
+          <input type="hidden" id="remBizId">
+
+          <div class="mb-2">
+            <label class="form-label">Business</label>
+            <input class="form-control" id="remBizName" disabled>
+          </div>
+
+          <div class="mb-2">
+            <label class="form-label">Title</label>
+            <input class="form-control" id="remTitle" value="SmartPOS Reminder">
+          </div>
+
+          <div class="mb-2">
+            <label class="form-label">Message</label>
+            <textarea class="form-control" id="remMessage" rows="3" placeholder="Type your message..."></textarea>
+          </div>
+
+          <div class="small text-muted">
+            This sends a push notification to all subscribed devices for this business.
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-light action-btn" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-primary action-btn" onclick="sendReminder()">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS (required for modal + dropdown + collapse) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    function formatLastLogin(timestamp) {
+      if (!timestamp) return "—";
+      const d = new Date(timestamp);
+      return d.toLocaleString("en-GB", {
+        year: "numeric",
+        month: "short",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    }
+
+    function formatDateShort(timestamp) {
+      if (!timestamp) return "—";
+      const d = new Date(timestamp);
+      return d.toLocaleString("en-GB", { year:"numeric", month:"short", day:"2-digit" });
+    }
+
+    function formatMoneyKES(value) {
+      if (value === null || value === undefined) return "—";
+      const num = Number(value);
+      if (!isFinite(num)) return "—";
+      return "KSh " + num.toLocaleString("en-KE", { maximumFractionDigits: 0 });
+    }
+
+    function escapeQuotes(str) {
+      return String(str || "").replace(/'/g, "\\'");
+    }
+
+    function statusBadgeClass(status) {
+      const s = (status || "").toLowerCase();
+      if (["trial","demo"].includes(s)) return "trial";
+      if (s === "active") return "active";
+      if (s === "expired") return "expired";
+      if (s === "suspended") return "suspended";
+      return "expired";
+    }
+
+    // ✅ ADDED: installed display helper
+    function isInstalled(client) {
+      // backend should return: is_installed: true/false (recommended)
+      // fallback: install_app: true/false
+      return !!(client.is_installed || client.install_app);
+    }
+
+    function installedLabel(client) {
+      return isInstalled(client) ? "✅" : "—";
+    }
+
+    let reminderModal;
+
+    function openReminderModal(businessId, businessName) {
+      document.getElementById("remBizId").value = businessId;
+      document.getElementById("remBizName").value = businessName || "-";
+      document.getElementById("remTitle").value = "SmartPOS Reminder";
+      document.getElementById("remMessage").value = "";
+
+      if (!reminderModal) {
+        reminderModal = new bootstrap.Modal(document.getElementById("reminderModal"));
+      }
+      reminderModal.show();
+    }
+
+    async function sendReminder() {
+      const businessId = document.getElementById("remBizId").value;
+      const title = document.getElementById("remTitle").value.trim();
+      const message = document.getElementById("remMessage").value.trim();
+
+      if (!title || !message) {
+        alert("Title and message are required.");
+        return;
+      }
+
+      const res = await fetch(`/superadmin/push_reminder/${businessId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, message })
+      });
+
+      const out = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        alert(out.detail || "Failed to send reminder.");
+        return;
+      }
+
+      reminderModal.hide();
+      alert(`Reminder sent to ${out.sent || 0} device(s).`);
+    }
+
+    function getActionMenuHTML(client) {
+      const id = client.business_id;
+      const status = (client.subscription_status || "").toLowerCase();
+
+      const canActivate = ["trial","expired","demo"].includes(status);
+      const canRenew = (status === "active");
+      const canSuspend = (status !== "suspended");
+      const canReactivate = (status === "suspended");
+
+      return `
+        <div class="dropdown">
+          <button class="btn btn-primary action-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Actions
+          </button>
+          <ul class="dropdown-menu">
+            <li>
+              <button class="dropdown-item" onclick="openReminderModal(${id}, '${escapeQuotes(client.business_name)}')">
+                Send Reminder
+              </button>
+            </li>
+
+            ${canActivate ? `
+              <li><button class="dropdown-item" onclick="activate(${id})">Activate (30 days)</button></li>
+            ` : ``}
+
+            ${canRenew ? `
+              <li><button class="dropdown-item" onclick="renew(${id})">Renew +30 days</button></li>
+            ` : ``}
+
+            ${canSuspend ? `
+              <li><button class="dropdown-item text-danger" onclick="suspend(${id})">Suspend</button></li>
+            ` : ``}
+
+            ${canReactivate ? `
+              <li><button class="dropdown-item" onclick="reactivate(${id})">Reactivate</button></li>
+            ` : ``}
+          </ul>
+        </div>
+      `;
+    }
+
+    function getDetailsPanelHTML(client) {
+      const products = (client.products_count ?? "—");
+      const lastSale = formatDateShort(client.last_sale_date);
+      const revenue = formatMoneyKES(client.total_revenue);
+      const installed = isInstalled(client) ? "✅ Installed" : "— Not installed";
+
+      return `
+        <div class="details-panel">
+          <div class="metric-chips">
+            <div class="chip"><span>📦 Products</span> ${products}</div>
+            <div class="chip"><span>🧾 Last sale</span> ${lastSale}</div>
+            <div class="chip"><span>💰 Revenue</span> ${revenue}</div>
+            <!-- ✅ ADDED -->
+            <div class="chip"><span>📲 App</span> ${installed}</div>
+          </div>
+
+          <div class="quick-actions">
+            <button class="btn qa-btn" onclick="openReminderModal(${client.business_id}, '${escapeQuotes(client.business_name)}')">
+              Send setup tip
+            </button>
+            <button class="btn qa-btn" onclick="copyPhone('${escapeQuotes(client.phone || "")}')">
+              Copy phone
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    function copyPhone(phone) {
+      if (!phone) return alert("No phone found.");
+      navigator.clipboard.writeText(phone).then(() => {
+        alert("Phone copied: " + phone);
+      }).catch(() => alert("Failed to copy."));
+    }
+
+    async function loadClients() {
+      const response = await fetch("/superadmin/get_all_clients");
+      const data = await response.json();
+
+      // Desktop table
+      const table = document.getElementById("clientTable");
+      table.innerHTML = "";
+
+      // Mobile cards
+      const cards = document.getElementById("clientCards");
+      cards.innerHTML = "";
+
+      data.forEach((client, idx) => {
+        const statusClass = statusBadgeClass(client.subscription_status);
+        const collapseId = `details_${client.business_id}_${idx}`;
+
+        // ---- TABLE MAIN ROW ----
+        table.innerHTML += `
+          <tr>
+            <td class="fw-bold">${client.business_name}</td>
+            <td>${client.username || "-"}</td>
+            <td>${client.phone || "-"}</td>
+            <td class="mono">${formatLastLogin(client.last_login)}</td>
+
+            <td>
+              <span class="badge-status ${statusClass}">
+                ${(client.subscription_status || "none").toUpperCase()}
+              </span>
+            </td>
+
+            <td class="mono">${client.days_left ?? "—"}</td>
+            <td>${client.is_active ? "Active" : "Inactive"}</td>
+
+            <!-- ✅ ADDED -->
+            <td class="mono">${installedLabel(client)}</td>
+
+            <td class="d-flex gap-2 align-items-center">
+              <button class="btn btn-light action-btn" type="button" data-bs-toggle="collapse" data-bs-target="#${collapseId}" aria-expanded="false">
+                Details
+              </button>
+              ${getActionMenuHTML(client)}
+            </td>
+          </tr>
+
+          <tr class="details-row">
+            <td colspan="9">
+              <div class="collapse" id="${collapseId}">
+                ${getDetailsPanelHTML(client)}
+              </div>
+            </td>
+          </tr>
+        `;
+
+        // ---- MOBILE CARD ----
+        const products = (client.products_count ?? "—");
+        const lastSale = formatDateShort(client.last_sale_date);
+        const revenue = formatMoneyKES(client.total_revenue);
+        const installed = isInstalled(client) ? "✅ Installed" : "— Not installed";
+
+        cards.innerHTML += `
+          <div class="client-card">
+            <div class="top">
+              <div>
+                <div class="biz">${client.business_name}</div>
+                <div class="meta">${client.username || "-"} • ${client.phone || "-"}</div>
+                <div class="meta">Last login: ${formatLastLogin(client.last_login)}</div>
+              </div>
+              <span class="badge-status ${statusClass}">
+                ${(client.subscription_status || "none").toUpperCase()}
+              </span>
+            </div>
+
+            <div class="meta mt-2">
+              Days left: <span class="mono fw-bold">${client.days_left ?? "—"}</span> • Status: <span class="fw-bold">${client.is_active ? "Active" : "Inactive"}</span>
+            </div>
+
+            <div class="stats">
+              <div class="chip"><span>📦</span> ${products}</div>
+              <div class="chip"><span>🧾</span> ${lastSale}</div>
+              <div class="chip"><span>💰</span> ${revenue}</div>
+              <!-- ✅ ADDED -->
+              <div class="chip"><span>📲</span> ${installed}</div>
+            </div>
+
+            <div class="bottom">
+              <button class="btn btn-light action-btn" onclick="openReminderModal(${client.business_id}, '${escapeQuotes(client.business_name)}')">
+                Reminder
+              </button>
+              ${getActionMenuHTML(client)}
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    async function activate(id) {
+      await fetch(`/superadmin/activate/${id}`, { method: "POST" });
+      loadClients();
+    }
+
+    async function renew(id) {
+      await fetch(`/superadmin/renew/${id}`, { method: "POST" });
+      loadClients();
+    }
+
+    async function suspend(id) {
+      await fetch(`/superadmin/suspend/${id}`, { method: "POST" });
+      loadClients();
+    }
+
+    async function reactivate(id) {
+      await fetch(`/superadmin/reactivate/${id}`, { method: "POST" });
+      loadClients();
+    }
+
+    loadClients();
+
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/static/service-worker.js")
+        .then(() => console.log("Service Worker registered"))
+        .catch(err => console.error("SW registration failed:", err));
+    }
+  </script>
+
+</body>
+</html>

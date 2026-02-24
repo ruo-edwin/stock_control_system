@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Staff | SmartPOS{% endblock %}
+
+{% block content %}
+
+<style>
+.header {
+    margin-bottom: 25px;
+}
+
+.header h1 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 600;
+}
+
+.header p {
+    font-size: 14px;
+    color: var(--muted);
+}
+
+.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+}
+
+.form-group {
+    margin-bottom: 16px;
+}
+
+label {
+    display: block;
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 6px;
+}
+
+select, input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+button {
+    padding: 10px 18px;
+    background: var(--primary);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 14px 8px;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+}
+
+thead {
+    font-size: 12px;
+    color: var(--muted);
+    text-align: left;
+}
+
+@media (min-width: 900px) {
+    .grid {
+        display: grid;
+        grid-template-columns: 350px 1fr;
+        gap: 24px;
+    }
+}
+</style>
+
+<div class="header">
+    <h1>Manage Staff</h1>
+    <p>Create and manage salon staff per branch.</p>
+</div>
+
+<!-- Branch Selector -->
+<div class="card">
+    <form method="GET" action="/auth/manage_staff">
+        <div class="form-group">
+            <label>Select Branch</label>
+            <select name="branch_id" onchange="this.form.submit()" required>
+                <option value="">Select branch</option>
+                {% for branch in branches %}
+                    <option value="{{ branch.id }}"
+                        {% if selected_branch and branch.id == selected_branch|int %}selected{% endif %}>
+                        {{ branch.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+    </form>
+</div>
+
+{% if selected_branch %}
+<div class="grid">
+
+    <!-- Create Staff -->
+    <div class="card">
+        <h3>Add Staff Member</h3>
+        <form method="POST" action="/auth/create_staff">
+            <input type="hidden" name="branch_id" value="{{ selected_branch }}">
+            <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" name="full_name" required>
+            </div>
+            <button type="submit">Add Staff</button>
+        </form>
+    </div>
+
+    <!-- Staff List -->
+    <div class="card">
+        <h3>Branch Staff</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for staff in staff_list %}
+                <tr>
+                    <td>{{ staff.full_name }}</td>
+                    <td>{{ "Active" if staff.is_active else "Inactive" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- PWA -->
+  <link rel="manifest" href="/static/manifest.json">
+  <meta name="theme-color" content="#635bff">
+
+  <!-- iOS support -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="SmartPOS">
+  <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
+
+  <title>Sales Report | SmartPOS</title>
+
+  <!-- Inter font (Stripe style) -->
+  <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+  <!-- Tom Select (searchable dropdowns) -->
+  <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+
+  <style>
+    :root {
+      --bg-body: #eef2f7;
+      --bg-card: #ffffff;
+      --border-subtle: rgba(0, 0, 0, 0.08);
+
+      --accent: #4f46e5;
+      --accent-soft: rgba(79, 70, 229, 0.08);
+      --accent-strong: #6366f1;
+
+      --text-main: #1f2937;
+      --text-muted: #6b7280;
+
+      --table-header: #f3f4f6;
+      --chip-bg: #f3f4f6;
+      --chip-border: rgba(0, 0, 0, 0.15);
+
+      --danger: #dc2626;
+
+      --shadow-soft: 0 10px 35px rgba(0, 0, 0, 0.08);
+      --radius-lg: 18px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 24px 16px 40px;
+      font-family: "Inter", system-ui;
+      background: linear-gradient(135deg, #f7f9fc 0%, #e3e7f0 40%, #d8dcee 100%);
+      color: var(--text-main);
+      display: flex;
+      justify-content: center;
+    }
+
+    .container { width: 100%; max-width: 1280px; }
+
+    /* ✅ Onboarding banner */
+    .onboarding-finish {
+      display: none;
+      background: rgba(79, 70, 229, 0.06);
+      border: 1px solid rgba(79, 70, 229, 0.18);
+      padding: 14px 16px;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-soft);
+      margin-bottom: 16px;
+      gap: 10px;
+    }
+
+    .onboarding-finish .title {
+      font-weight: 900;
+      color: #4338ca;
+      margin: 0 0 6px;
+    }
+
+    .onboarding-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .onboarding-actions a {
+      text-decoration: none;
+      padding: 10px 16px;
+      border-radius: 999px;
+      border: none;
+      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+      color: #fff;
+      font-weight: 900;
+      box-shadow: 0 12px 30px rgba(100, 85, 236, 0.25);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* ---------------- HEADER ---------------- */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .page-title { display: flex; flex-direction: column; gap: 4px; }
+
+    .page-title h1 {
+      margin: 0;
+      font-size: 1.8rem;
+      letter-spacing: -0.03em;
+      background: linear-gradient(120deg, #1f2937, #6366f1);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+    }
+
+    .page-title span { font-size: 0.9rem; color: var(--text-muted); }
+
+    .header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .header-actions a {
+      text-decoration: none;
+      padding: 7px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+      background: #ffffff;
+    }
+
+    .header-actions button {
+      border: none;
+      border-radius: 999px;
+      padding: 8px 16px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+      color: white;
+      font-weight: 500;
+      cursor: pointer;
+      box-shadow: 0 12px 30px rgba(100, 85, 236, 0.3);
+    }
+
+    /* ---------------- FILTERS ---------------- */
+    .filters {
+      background: #ffffff;
+      border-radius: var(--radius-lg);
+      padding: 14px 16px;
+      border: 1px solid var(--border-subtle);
+      box-shadow: var(--shadow-soft);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    .filter-group {
+      flex: 1;
+      min-width: 160px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .filter-label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .filters input,
+    .filters select {
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(0, 0, 0, 0.15);
+      background: #ffffff;
+      color: var(--text-main);
+      font-size: 0.85rem;
+    }
+
+    .filter-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .filter-actions button {
+      padding: 8px 14px;
+      border-radius: 999px;
+      cursor: pointer;
+      border: 1px solid rgba(0,0,0,0.1);
+      background: #ffffff;
+      font-size: 0.8rem;
+    }
+
+    .filter-actions button.primary {
+      border: none;
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .filter-main-actions,
+    .filter-quick-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .filter-divider {
+      width: 1px;
+      height: 32px;
+      background: var(--border-subtle);
+    }
+
+    .quick-btn {
+      transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, border 0.2s ease;
+    }
+
+    .quick-btn.active {
+      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+      color: #ffffff;
+      border: none;
+      box-shadow: 0 8px 20px rgba(79, 70, 229, 0.35);
+    }
+
+    /* ---------------- DASHBOARD CARDS ---------------- */
+    .info-dashboard {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .card {
+      background: #ffffff;
+      padding: 20px;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-soft);
+      border: 1px solid var(--border-subtle);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .card h2 {
+      margin: 0;
+      font-size: 1.4rem;
+      font-weight: 600;
+    }
+
+    .card-sub { font-size: 0.75rem; color: var(--text-muted); }
+
+    /* ---------------- TABLE ---------------- */
+    .table-container {
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-subtle);
+      background: #ffffff;
+      box-shadow: var(--shadow-soft);
+      overflow: hidden;
+    }
+
+    .table-scroll { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      min-width: 920px;
+      border-collapse: collapse;
+      font-size: 0.86rem;
+    }
+
+    th {
+      background: var(--table-header);
+      padding: 12px;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    td {
+      padding: 12px;
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+      white-space: nowrap;
+    }
+
+    tr:hover { background: #f9fafb; }
+
+    .chip {
+      padding: 4px 10px;
+      background: var(--chip-bg);
+      border: 1px solid var(--chip-border);
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .demo-badge {
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 900;
+      border: 1px solid rgba(99, 102, 241, 0.28);
+      background: rgba(99, 102, 241, 0.12);
+      color: var(--accent);
+    }
+
+    .amount.pos { color: #16a34a; }
+    .amount.neg { color: var(--danger); }
+
+    /* ---------------- PAGINATION ---------------- */
+    .pagination {
+      padding: 14px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: flex-end;
+      background: #ffffff;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .pagination span { color: var(--text-muted); font-size: 0.8rem; }
+
+    .pagination button {
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(0,0,0,0.1);
+      background: #ffffff;
+      cursor: pointer;
+    }
+
+    .pagination button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* ✅ Sticky CTA: hidden by default everywhere */
+    .mobile-sticky-cta { display: none; }
+
+    /* ✅ Install Modal (minimal) */
+    .install-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 10000;
+    }
+    .install-modal.show { display: flex; }
+
+    .install-card {
+      width: 100%;
+      max-width: 520px;
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+      border: 1px solid rgba(0,0,0,0.08);
+      overflow: hidden;
+    }
+
+    .install-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 16px;
+      background: rgba(79,70,229,0.06);
+      border-bottom: 1px solid rgba(0,0,0,0.08);
+    }
+
+    .install-title { font-weight: 900; color: #4338ca; }
+    .install-close {
+      border: none;
+      background: #fff;
+      border-radius: 999px;
+      width: 36px;
+      height: 36px;
+      cursor: pointer;
+      border: 1px solid rgba(0,0,0,0.10);
+    }
+
+    .install-body { padding: 14px 16px; }
+
+    .install-btn {
+      width: 100%;
+      border: none;
+      border-radius: 999px;
+      padding: 12px 14px;
+      font-weight: 900;
+      color: #fff;
+      cursor: pointer;
+      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+      box-shadow: 0 12px 30px rgba(100, 85, 236, 0.25);
+    }
+
+    .install-hint {
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(0,0,0,0.10);
+      background: #ffffff;
+      color: var(--text-muted);
+      font-size: 0.92rem;
+      line-height: 1.35;
+      display: none;
+    }
+
+    .install-next {
+      margin-top: 10px;
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(0,0,0,0.10);
+      background: #ffffff;
+      font-weight: 900;
+      cursor: pointer;
+      display: none;
+    }
+
+    @media (max-width: 900px) {
+      .info-dashboard { grid-template-columns: repeat(2,1fr); }
+    }
+
+    @media (max-width: 700px) {
+      .info-dashboard { grid-template-columns: 1fr; }
+      .page-header { flex-direction: column; align-items: flex-start; }
+
+      body { padding-bottom: 98px; }
+
+      .onboarding-actions a {
+        width: 100%;
+        justify-content: center;
+        text-align: center;
+      }
+
+      table { min-width: 0; }
+      th:nth-child(2), td:nth-child(2),
+      th:nth-child(4), td:nth-child(4) {
+        display: none;
+      }
+
+      td { white-space: normal; }
+
+      .mobile-sticky-cta.show {
+        position: fixed;
+        left: 12px;
+        right: 12px;
+        bottom: 12px;
+        z-index: 9999;
+
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+
+        padding: 12px 14px;
+        background: rgba(255,255,255,0.92);
+        border: 1px solid rgba(0,0,0,0.10);
+        border-radius: 16px;
+        box-shadow: 0 18px 40px rgba(0,0,0,0.14);
+        backdrop-filter: blur(10px);
+      }
+
+      .ms-text { display: flex; flex-direction: column; gap: 2px; }
+      .ms-title { font-weight: 900; font-size: 0.92rem; color: #111827; }
+      .ms-sub { font-size: 0.82rem; color: var(--text-muted); }
+
+      .ms-btn {
+        text-decoration: none;
+        padding: 10px 14px;
+        border-radius: 999px;
+        font-weight: 900;
+        color: #fff;
+        background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+        box-shadow: 0 12px 30px rgba(100, 85, 236, 0.25);
+        white-space: nowrap;
+      }
+    }
+  </style>
+</head>
+
+<body>
+<div class="container">
+
+  <!-- ✅ Onboarding banner (Step 3 of 4) -->
+  <div class="onboarding-finish" id="onboardingFinish">
+    <div>
+      <div class="title">✅ Step 3 of 4 — Install SmartPOS</div>
+      <div class="onboarding-actions">
+        <a href="javascript:void(0)" id="installCtaTop" onclick="openInstallModal()">📲 Install SmartPOS (Step 4)</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- HEADER -->
+  <div class="page-header">
+    <div class="page-title">
+      <h1>Sales Report</h1>
+      <span>Track item-level performance across all orders</span>
+    </div>
+
+    <div class="header-actions">
+      <a href="/auth/dashboard">← Back to dashboard</a>
+      <button onclick="exportToExcel()">⬇ Export Excel</button>
+    </div>
+  </div>
+
+  <!-- FILTERS -->
+  <div class="filters">
+
+    <div class="filter-group">
+      <span class="filter-label">From</span>
+      <input type="date" id="startDate">
+    </div>
+
+    <div class="filter-group">
+      <span class="filter-label">To</span>
+      <input type="date" id="endDate">
+    </div>
+
+    <div class="filter-group">
+      <span class="filter-label">Order Code</span>
+      <select id="orderFilter">
+        <option value="">All Orders</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <span class="filter-label">Client</span>
+      <select id="clientFilter">
+        <option value="">All Clients</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <span class="filter-label">Sales Person</span>
+      <select id="salesFilter">
+        <option value="">All Salespersons</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <span class="filter-label">Product</span>
+      <select id="productFilter">
+        <option value="">All products</option>
+      </select>
+    </div>
+
+    <div class="filter-actions">
+      <div class="filter-main-actions">
+        <button class="primary" onclick="applyFilters()">Filter</button>
+        <button onclick="resetFilters()">Reset</button>
+      </div>
+
+      <div class="filter-divider"></div>
+
+      <div class="filter-quick-actions">
+        <button class="quick-btn" id="quick-today" onclick="setQuickDate('today')">Today</button>
+        <button class="quick-btn" id="quick-yesterday" onclick="setQuickDate('yesterday')">Yesterday</button>
+        <button class="quick-btn" id="quick-week" onclick="setQuickDate('week')">This Week</button>
+        <button class="quick-btn" id="quick-month" onclick="setQuickDate('month')">This Month</button>
+        <button class="quick-btn" id="quick-year" onclick="setQuickDate('year')">This Year</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="info-dashboard">
+
+    <div class="card">
+      <div class="card-header"><span>Total Items Sold</span><span class="card-badge">Volume</span></div>
+      <h2 id="totalQty">0</h2>
+      <div class="card-sub">Sum of all quantities in this view</div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><span>Total Revenue</span><span class="card-badge">Gross</span></div>
+      <h2 id="totalRevenue">0</h2>
+      <div class="card-sub">Subtotal (Ksh)</div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><span>Total Profit</span><span class="card-badge">Net</span></div>
+      <h2 id="totalProfit">0</h2>
+      <div class="card-sub">Profit from buying price</div>
+    </div>
+
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-container">
+
+    <div class="table-scroll">
+      <table id="salesTable">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Order</th>
+            <th>Client</th>
+            <th>Sales Person</th>
+            <th>Product</th>
+            <th>Qty</th>
+            <th>Subtotal</th>
+            <th>Profit</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <!-- PAGINATION -->
+    <div class="pagination">
+      <span id="pageInfo">Page 1</span>
+      <button id="prevBtn" onclick="prevPage()">Prev</button>
+      <button id="nextBtn" onclick="nextPage()">Next</button>
+    </div>
+  </div>
+
+  <a class="back-link" href="/auth/dashboard">← Back to Home</a>
+
+  <!-- ✅ Step 4 Modal: 1 button + tiny iOS hint + continue -->
+  <div class="install-modal" id="installModal" aria-hidden="true">
+    <div class="install-card">
+      <div class="install-head">
+        <div class="install-title">✅ Step 4 of 4 — Install SmartPOS</div>
+        <button class="install-close" onclick="closeInstallModal()">✕</button>
+      </div>
+
+      <div class="install-body">
+        <button id="installBtn" class="install-btn">Install SmartPOS</button>
+
+        <div id="installHint" class="install-hint">
+          iPhone: Tap <b>Share</b> → <b>Add to Home Screen</b>.
+        </div>
+
+        <button id="goDashboardBtn" class="install-next">Go to Dashboard</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ✅ Mobile-only sticky CTA -->
+  <div class="mobile-sticky-cta" id="mobileStickyCta">
+    <div class="ms-text">
+      <div class="ms-title">Step 3 of 4</div>
+      <div class="ms-sub">Install SmartPOS</div>
+    </div>
+    <a class="ms-btn" href="javascript:void(0)" onclick="openInstallModal()">Install</a>
+  </div>
+
+</div>
+
+<!-- Excel Export -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<script>
+  const baseURL = "https://pos-10-production.up.railway.app";
+  let allItems = [];
+  let filteredItems = [];
+  let currentPage = 1;
+  const pageSize = 25;
+  let activeQuickFilter = null;
+
+  // ✅ Detect onboarding mode from URL
+  const params = new URLSearchParams(window.location.search);
+  const isOnboarding = params.get("source") === "onboarding";
+
+  // ✅ Show onboarding banner if onboarding
+  const finishEl = document.getElementById("onboardingFinish");
+  if (isOnboarding && finishEl) finishEl.style.display = "block";
+
+  // ✅ Mobile-only sticky CTA (only if onboarding AND screen <= 700px)
+  const stickyEl = document.getElementById("mobileStickyCta");
+  const isMobile = window.matchMedia("(max-width: 700px)").matches;
+  if (isOnboarding && stickyEl && isMobile) stickyEl.classList.add("show");
+
+  // ---------- INSTALL (smooth minimal) ----------
+  let deferredPrompt = null;
+
+  function isIOS() {
+    return /iphone|ipad|ipod/i.test(navigator.userAgent);
+  }
+
+  function openInstallModal() {
+    const modal = document.getElementById("installModal");
+    if (!modal) return;
+
+    modal.classList.add("show");
+    modal.setAttribute("aria-hidden", "false");
+
+    const btn = document.getElementById("installBtn");
+    const hint = document.getElementById("installHint");
+    const goBtn = document.getElementById("goDashboardBtn");
+
+    // Reset
+    hint.style.display = "none";
+    goBtn.style.display = "none";
+
+    // Button label adapts
+    if (isIOS()) {
+      btn.textContent = "Add to Home Screen";
+    } else {
+      btn.textContent = "Install SmartPOS";
+    }
+
+    // If Android prompt exists, keep it ready
+    // If iOS (no prompt), show tiny hint + allow continue
+    if (!deferredPrompt) {
+      if (isIOS()) {
+        hint.style.display = "block";
+        goBtn.style.display = "block";
+      } else {
+        // Desktop or unsupported: still allow dashboard
+        goBtn.style.display = "block";
+      }
+    }
+  }
+
+  function closeInstallModal() {
+    const modal = document.getElementById("installModal");
+    if (!modal) return;
+    modal.classList.remove("show");
+    modal.setAttribute("aria-hidden", "true");
+  }
+
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+  });
+
+  document.getElementById("goDashboardBtn").addEventListener("click", () => {
+    window.location.href = "/auth/dashboard";
+  });
+
+  document.getElementById("installBtn").addEventListener("click", async () => {
+    // iOS: show tiny hint + show continue
+    if (isIOS() && !deferredPrompt) {
+      document.getElementById("installHint").style.display = "block";
+      document.getElementById("goDashboardBtn").style.display = "block";
+      return;
+    }
+
+    // Android/Chrome: prompt install
+    if (!deferredPrompt) {
+      // fallback: just continue
+      window.location.href = "/auth/dashboard";
+      return;
+    }
+
+    deferredPrompt.prompt();
+    const choice = await deferredPrompt.userChoice;
+    deferredPrompt = null;
+
+    if (choice && choice.outcome === "accepted") {
+      window.location.href = "/auth/dashboard";
+    } else {
+      // user canceled -> show continue
+      document.getElementById("goDashboardBtn").style.display = "block";
+    }
+  });
+
+  window.addEventListener("appinstalled", () => {
+    window.location.href = "/auth/dashboard";
+  });
+
+  // ---------- DATE HELPERS ----------
+  function formatDate(date) {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  }
+
+  function clearQuickButtonsActive() {
+    document.querySelectorAll(".quick-btn").forEach(btn => btn.classList.remove("active"));
+  }
+
+  function setQuickDate(range) {
+    if (activeQuickFilter === range) {
+      activeQuickFilter = null;
+      document.getElementById("startDate").value = "";
+      document.getElementById("endDate").value = "";
+      clearQuickButtonsActive();
+      applyFilters();
+      return;
+    }
+
+    activeQuickFilter = range;
+
+    const today = new Date();
+    let start = new Date(today);
+    let end = new Date(today);
+
+    if (range === "yesterday") {
+      start.setDate(today.getDate() - 1);
+      end.setDate(today.getDate() - 1);
+    } else if (range === "week") {
+      const day = today.getDay();
+      const diff = day === 0 ? -6 : 1 - day;
+      start.setDate(today.getDate() + diff);
+    } else if (range === "month") {
+      start = new Date(today.getFullYear(), today.getMonth(), 1);
+    } else if (range === "year") {
+      start = new Date(today.getFullYear(), 0, 1);
+    }
+
+    document.getElementById("startDate").value = formatDate(start);
+    document.getElementById("endDate").value = formatDate(end);
+
+    clearQuickButtonsActive();
+    const btn = document.getElementById(`quick-${range}`);
+    if (btn) btn.classList.add("active");
+
+    applyFilters();
+  }
+
+  // ---------- LOAD DATA ----------
+  async function loadSales() {
+    const res = await fetch(`${baseURL}/sales/get_sales_items`, { credentials: "include" });
+    allItems = await res.json();
+    filteredItems = allItems.slice();
+
+    loadProductFilter();
+    loadOrderFilter();
+    loadClientFilter();
+    loadSalesFilter();
+
+    new TomSelect("#orderFilter", { allowEmptyOption: true });
+    new TomSelect("#clientFilter", { allowEmptyOption: true });
+    new TomSelect("#salesFilter", { allowEmptyOption: true });
+    new TomSelect("#productFilter", { allowEmptyOption: true });
+
+    renderTable();
+
+    if (isOnboarding) {
+      setQuickDate("today");
+      // Smooth: auto-open install modal on mobile after a short delay
+      if (isMobile) setTimeout(openInstallModal, 700);
+    }
+  }
+
+  function loadProductFilter() {
+    const select = document.getElementById("productFilter");
+    const products = [...new Set(allItems.map(i => i.product_name))];
+    products.forEach(p => {
+      if (!p) return;
+      const op = document.createElement("option");
+      op.value = p;
+      op.textContent = p;
+      select.appendChild(op);
+    });
+  }
+
+  function loadOrderFilter() {
+    const select = document.getElementById("orderFilter");
+    const orders = [...new Set(allItems.map(i => i.order_code))];
+    orders.forEach(code => {
+      if (!code) return;
+      const op = document.createElement("option");
+      op.value = code;
+      op.textContent = code;
+      select.appendChild(op);
+    });
+  }
+
+  function loadClientFilter() {
+    const select = document.getElementById("clientFilter");
+    const clients = [...new Set(allItems.map(i => i.client_name))];
+    clients.forEach(c => {
+      if (!c) return;
+      const op = document.createElement("option");
+      op.value = c;
+      op.textContent = c;
+      select.appendChild(op);
+    });
+  }
+
+  function loadSalesFilter() {
+    const select = document.getElementById("salesFilter");
+    const salesPeople = [...new Set(allItems.map(i => i.sales_person))];
+    salesPeople.forEach(s => {
+      if (!s) return;
+      const op = document.createElement("option");
+      op.value = s;
+      op.textContent = s;
+      select.appendChild(op);
+    });
+  }
+
+  // ---------- FILTERS ----------
+  function applyFilters() {
+    const sDate = startDate.value;
+    const eDate = endDate.value;
+    const order = orderFilter.value;
+    const client = clientFilter.value;
+    const sales = salesFilter.value;
+    const product = productFilter.value;
+
+    let data = allItems.slice();
+
+    if (sDate) data = data.filter(i => new Date(i.date) >= new Date(sDate));
+    if (eDate) data = data.filter(i => new Date(i.date) <= new Date(eDate + "T23:59:59"));
+
+    if (order) data = data.filter(i => i.order_code === order);
+    if (client) data = data.filter(i => i.client_name === client);
+    if (sales) data = data.filter(i => i.sales_person === sales);
+    if (product) data = data.filter(i => i.product_name === product);
+
+    filteredItems = data;
+    currentPage = 1;
+
+    renderTable();
+  }
+
+  function resetFilters() {
+    startDate.value = "";
+    endDate.value = "";
+
+    if (orderFilter.tomselect) orderFilter.tomselect.clear();
+    else orderFilter.value = "";
+
+    if (clientFilter.tomselect) clientFilter.tomselect.clear();
+    else clientFilter.value = "";
+
+    if (salesFilter.tomselect) salesFilter.tomselect.clear();
+    else salesFilter.value = "";
+
+    if (productFilter.tomselect) productFilter.tomselect.clear();
+    else productFilter.value = "";
+
+    activeQuickFilter = null;
+    clearQuickButtonsActive();
+
+    filteredItems = allItems.slice();
+    currentPage = 1;
+    renderTable();
+  }
+
+  // ---------- TABLE + TOTALS ----------
+  function renderTable() {
+    const tbody = document.querySelector("#salesTable tbody");
+    tbody.innerHTML = "";
+
+    const start = (currentPage - 1) * pageSize;
+    const paginated = filteredItems.slice(start, start + pageSize);
+
+    let qtySum = 0;
+    let revenueSum = 0;
+    let profitSum = 0;
+
+    paginated.forEach(i => {
+      const qty = Number(i.quantity) || 0;
+      const subtotal = Number(i.subtotal) || 0;
+      const buyingPrice = Number(i.buying_price) || 0;
+      const profit = subtotal - (buyingPrice * qty);
+
+      qtySum += qty;
+      revenueSum += subtotal;
+      profitSum += profit;
+
+      const profitClass = profit >= 0 ? "pos" : "neg";
+      const demoBadge = i.is_demo ? `<span class="demo-badge">DEMO</span>` : "";
+
+      const row = `
+        <tr>
+          <td>${new Date(i.date).toLocaleString()}</td>
+          <td><span class="chip">${i.order_code || "-"} ${demoBadge}</span></td>
+          <td>${i.client_name || "-"}</td>
+          <td>${i.sales_person || "-"}</td>
+          <td>${i.product_name}</td>
+          <td>${qty}</td>
+          <td>${subtotal.toFixed(2)}</td>
+          <td class="amount ${profitClass}">${profit.toFixed(2)}</td>
+        </tr>
+      `;
+      tbody.innerHTML += row;
+    });
+
+    document.getElementById("totalQty").innerText = qtySum.toLocaleString();
+    document.getElementById("totalRevenue").innerText = revenueSum.toLocaleString();
+    document.getElementById("totalProfit").innerText = profitSum.toLocaleString();
+
+    const totalPages = Math.ceil(filteredItems.length / pageSize) || 1;
+    document.getElementById("pageInfo").textContent = `Page ${currentPage} of ${totalPages}`;
+    prevBtn.disabled = currentPage === 1;
+    nextBtn.disabled = currentPage === totalPages;
+  }
+
+  // ---------- PAGINATION ----------
+  function nextPage() {
+    const totalPages = Math.ceil(filteredItems.length / pageSize) || 1;
+    if (currentPage < totalPages) {
+      currentPage++;
+      renderTable();
+    }
+  }
+
+  function prevPage() {
+    if (currentPage > 1) {
+      currentPage--;
+      renderTable();
+    }
+  }
+
+  // ---------- EXPORT ----------
+  function exportToExcel() {
+    const table = document.getElementById("salesTable");
+    const wb = XLSX.utils.table_to_book(table, { sheet: "Sales Report" });
+    XLSX.writeFile(wb, "Sales_Report.xlsx");
+  }
+
+  loadSales();
+
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("/static/service-worker.js")
+      .then(() => console.log("Service Worker registered"))
+      .catch(err => console.error("SW registration failed:", err));
+  }
+</script>
+
+</body>
+</html>

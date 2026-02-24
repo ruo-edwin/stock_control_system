@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- PWA -->
+  <link rel="manifest" href="/static/manifest.json">
+  <meta name="theme-color" content="#635bff">
+
+  <!-- iOS support -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="SmartPOS">
+  <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
+
+  <title>SmartPOS Registration</title>
+
+  <!-- Bootstrap & Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+  <style>
+    body {
+      background: linear-gradient(135deg, #5e60ce, #7400b8);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #fff;
+      font-family: 'Poppins', sans-serif;
+      padding: 15px;
+    }
+
+    .card {
+      border-radius: 20px;
+      overflow: hidden;
+      max-width: 750px;
+      width: 100%;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      margin: auto;
+    }
+
+    .card-body {
+      background-color: #fff;
+      color: #333;
+      padding: 2rem;
+    }
+
+    .form-control {
+      border-radius: 10px;
+      padding-left: 42px;
+      height: 45px;
+    }
+
+    .icon-wrapper {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #888;
+      font-size: 1.1rem;
+    }
+
+    h3 {
+      color: #5e60ce;
+      font-weight: 600;
+    }
+
+    p.text-muted strong {
+      background: rgba(116, 0, 184, 0.05);
+      padding: 4px 8px;
+      border-radius: 6px;
+      color: #333;
+    }
+
+    .btn-primary {
+      background-color: #5e60ce;
+      border: none;
+      border-radius: 10px;
+      font-weight: 600;
+    }
+
+    .btn-primary:hover {
+      background-color: #4b4fc1;
+    }
+
+    /* --- Mobile & Tablet Responsiveness --- */
+    @media (max-width: 768px) {
+      .card-body {
+        padding: 1.5rem;
+      }
+
+      h3 {
+        font-size: 1.4rem;
+      }
+
+      p.text-muted strong {
+        font-size: 0.85rem;
+      }
+
+      .btn-primary {
+        width: 100% !important;
+      }
+    }
+
+    @media (max-width: 576px) {
+      body {
+        padding: 10px;
+      }
+
+      .card {
+        max-width: 100%;
+      }
+
+      .card-body {
+        padding: 1.2rem;
+      }
+
+      .form-control {
+        font-size: 0.9rem;
+        padding-left: 38px;
+        height: 42px;
+      }
+
+      .icon-wrapper {
+        font-size: 1rem;
+      }
+
+      .text-center img {
+        width: 60px;
+      }
+
+      p.text-muted strong {
+        display: block;
+        font-size: 0.8rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="card">
+    <div class="card-body">
+
+      <!-- Logo and Tagline -->
+      <div class="text-center mb-4">
+        <img src="logo.png" alt="SmartPOS Logo" width="70">
+        <h3 class="mt-2">SmartPOS</h3>
+        <p class="text-muted mb-0 fw-semibold" style="font-size: 0.95rem;">
+          <strong>
+            SmartPOS makes it easy to manage stock and track every sale in real-time — keeping your business organized and stress-free.
+          </strong>
+        </p>
+      </div>
+
+      <!-- Registration Form -->
+      <form id="registerForm" onsubmit="submitForm(event)">
+        <div class="row g-3">
+          <div class="col-md-6 position-relative">
+            <span class="icon-wrapper"><i class="bi bi-shop"></i></span>
+            <input type="text" id="business_name" class="form-control" placeholder="Business Name" required>
+          </div>
+
+          <div class="col-md-6 position-relative">
+            <span class="icon-wrapper"><i class="bi bi-person-circle"></i></span>
+            <input type="text" id="customer_name" class="form-control" placeholder="Owner's Full Name" required>
+          </div>
+
+          <div class="col-md-6 position-relative">
+            <span class="icon-wrapper"><i class="bi bi-envelope"></i></span>
+            <input type="email" id="email" class="form-control" placeholder="Email Address" required>
+          </div>
+
+          <div class="col-md-6 position-relative">
+            <span class="icon-wrapper"><i class="bi bi-telephone"></i></span>
+            <input type="tel" id="phone" class="form-control" placeholder="Phone Number" required>
+          </div>
+
+          <div class="col-md-6 position-relative">
+            <span class="icon-wrapper"><i class="bi bi-lock"></i></span>
+            <input type="password" id="password" class="form-control" placeholder="Password" required>
+          </div>
+
+          <div class="col-md-6 position-relative">
+            <span class="icon-wrapper"><i class="bi bi-lock-fill"></i></span>
+            <input type="password" id="confirm_password" class="form-control" placeholder="Confirm Password" required>
+          </div>
+
+          <div class="col-12 text-center mt-3">
+            <button type="submit" class="btn btn-primary w-50 py-2">Create Account</button>
+          </div>
+
+          <div class="col-12 text-center mt-3">
+            <p class="text-muted">
+              Already have an account?
+              <a href="https://pos-10-production.up.railway.app/auth/login" class="text-primary fw-semibold" onclick="showLogin()">Log In</a>
+            </p>
+          </div>
+        </div>
+      </form>
+
+    </div>
+  </div>
+
+  <!-- Success Toast -->
+  <div class="toast-container position-fixed top-0 end-0 p-3">
+    <div id="successToast" class="toast align-items-center text-bg-success border-0" role="alert">
+      <div class="d-flex">
+        <div class="toast-body">
+          ✅ Account created successfully! Redirecting…
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS Bundle (required for toast) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    async function submitForm(e) {
+      e.preventDefault();
+
+      const business_name = document.getElementById("business_name").value;
+      const username = document.getElementById("customer_name").value;
+      const email = document.getElementById("email").value;
+      const phone = document.getElementById("phone").value;
+      const password = document.getElementById("password").value;
+      const confirm_password = document.getElementById("confirm_password").value;
+
+      if (password !== confirm_password) {
+        alert("❌ Passwords do not match!");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("business_name", business_name);
+      formData.append("username", username);
+      formData.append("email", email);
+      formData.append("phone", phone);
+      formData.append("password", password);
+
+      try {
+        const response = await fetch("https://pos-10-production.up.railway.app/auth/register_form", {
+          method: "POST",
+          body: formData,
+          credentials: "include" // ✅ IMPORTANT: allows cookie from backend to be saved
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          alert("❌ Error: " + (result.detail || "Registration failed"));
+        } else {
+          // ✅ Show toast instead of alert
+          const toastEl = document.getElementById("successToast");
+          const toastBody = toastEl.querySelector(".toast-body");
+          toastBody.textContent = (result.message || "✅ Account created!") + " Redirecting…";
+
+          const toast = new bootstrap.Toast(toastEl, { delay: 2000 });
+          toast.show();
+
+          // ✅ Redirect after toast
+          setTimeout(() => {
+            window.location.href = "https://pos-10-production.up.railway.app" + (result.redirect || "/auth/dashboard");
+          }, 2300);
+        }
+      } catch (error) {
+        console.error("Error:", error);
+        alert("⚠️ Failed to connect to the server. Check your backend or internet connection.");
+      }
+    }
+
+    function showLogin() {
+      alert("Switch to login view (You’ll replace this with your login form).");
+    }
+
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/static/service-worker.js")
+        .then(() => console.log("Service Worker registered"))
+        .catch(err => console.error("SW registration failed:", err));
+    }
+  </script>
+</body>
+</html>

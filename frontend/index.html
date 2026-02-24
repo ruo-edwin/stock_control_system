@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Inventory Overview | SmartPOS{% endblock %}
+
+{% block content %}
+
+<style>
+.header {
+    margin-bottom: 30px;
+}
+
+.header h1 {
+    font-size: 22px;
+    font-weight: 600;
+}
+
+.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 14px 10px;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+}
+
+thead {
+    font-size: 12px;
+    color: var(--muted);
+    text-align: left;
+}
+
+.stock-badge {
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.low {
+    background: rgba(220,53,69,0.1);
+    color: #dc3545;
+}
+
+.ok {
+    background: rgba(40,167,69,0.1);
+    color: #28a745;
+}
+</style>
+
+<div class="header">
+    <h1>Inventory Overview</h1>
+</div>
+
+<div class="card">
+
+    <table>
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Current Stock</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for product in stock_data %}
+            <tr>
+                <td>{{ product.name }}</td>
+                <td>{{ product.stock }}</td>
+                <td>
+                    {% if product.stock <= 5 %}
+                        <span class="stock-badge low">Low Stock</span>
+                    {% else %}
+                        <span class="stock-badge ok">In Stock</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+
+    </table>
+
+</div>
+
+{% endblock %}

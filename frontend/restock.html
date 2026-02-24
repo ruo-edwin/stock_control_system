@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}Restock | SmartPOS{% endblock %}
+
+{% block content %}
+
+<style>
+.header {
+    margin-bottom: 30px;
+}
+
+.header h1 {
+    font-size: 22px;
+    font-weight: 600;
+}
+
+.layout {
+    display: grid;
+    grid-template-columns: 400px 1fr;
+    gap: 24px;
+}
+
+.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+}
+
+.form-group {
+    margin-bottom: 16px;
+}
+
+label {
+    font-size: 13px;
+    color: var(--muted);
+    display: block;
+    margin-bottom: 6px;
+}
+
+input, select, textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    font-size: 14px;
+}
+
+button {
+    padding: 10px 18px;
+    border-radius: 8px;
+    border: none;
+    background: var(--primary);
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 14px 8px;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+}
+
+@media (max-width: 900px) {
+    .layout {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<div class="header">
+    <h1>Restock Inventory</h1>
+</div>
+
+<div class="layout">
+
+    <!-- RESTOCK FORM -->
+    <div class="card">
+        <h3>Add Stock</h3>
+
+        <form method="POST" action="/inventory/restock">
+
+            <div class="form-group">
+                <label>Product</label>
+                <select name="product_id" required>
+                    <option value="">Select product</option>
+                    {% for product in products %}
+                        <option value="{{ product.id }}">{{ product.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Quantity</label>
+                <input type="number" name="quantity" min="1" required>
+            </div>
+
+            <div class="form-group">
+                <label>Supplier (optional)</label>
+                <input type="text" name="supplier">
+            </div>
+
+            <div class="form-group">
+                <label>Invoice Number (optional)</label>
+                <input type="text" name="invoice_number">
+            </div>
+
+            <div class="form-group">
+                <label>Notes</label>
+                <textarea name="notes" rows="3"></textarea>
+            </div>
+
+            <button type="submit">Add Stock</button>
+
+        </form>
+    </div>
+
+    <!-- RECENT RESTOCKS -->
+    <div class="card">
+        <h3>Recent Restocks</h3>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Qty</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for movement in movements %}
+                <tr>
+                    <td>{{ movement.product.name }}</td>
+                    <td>{{ movement.quantity }}</td>
+                    <td>{{ movement.created_at }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+{% endblock %}

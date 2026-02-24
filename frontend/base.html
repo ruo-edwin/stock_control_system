@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}SmartPOS{% endblock %}</title>
+
+<link href="https://rsms.me/inter/inter.css" rel="stylesheet">
+
+<style>
+:root {
+    --bg: #f6f9fc;
+    --sidebar: #111827;
+    --card: #ffffff;
+    --border: #e6ebf1;
+    --text: #1a1f36;
+    --muted: #697386;
+    --primary: #635bff;
+}
+
+body {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 240px;
+    background: var(--sidebar);
+    color: white;
+    height: 100vh;
+    padding: 24px 16px;
+    box-sizing: border-box;
+    position: fixed;
+}
+
+.sidebar h2 {
+    font-size: 18px;
+    margin-bottom: 30px;
+}
+
+.sidebar a {
+    display: block;
+    color: #cbd5e1;
+    text-decoration: none;
+    padding: 10px 12px;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    font-size: 14px;
+}
+
+.sidebar a:hover {
+    background: #1f2937;
+    color: white;
+}
+
+/* Content */
+.main {
+    margin-left: 240px;
+    padding: 40px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Cards */
+.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .sidebar {
+        position: relative;
+        width: 100%;
+        height: auto;
+    }
+    .main {
+        margin-left: 0;
+        padding: 20px;
+    }
+    body {
+        flex-direction: column;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="sidebar">
+    <h2>SmartPOS</h2>
+
+    <a href="/auth/dashboard">Dashboard</a>
+    <a href="/product/list">Products</a>
+    <a href="/inventory/assign">Assign Stock</a>
+    <a href="/sales/recordsale">Sales</a>
+    <a href="/auth/manage_user">Manage Users</a>
+    <a href="/auth/manage_staff">Manage Staff</a>
+    <a href="/auth/logout">Logout</a>
+</div>
+
+<div class="main">
+    {% block content %}{% endblock %}
+</div>
+
+</body>
+</html>
