@@ -1,93 +1,197 @@
 {% extends "base.html" %}
 
-{% block title %}Inventory Overview | SmartPOS{% endblock %}
-
 {% block content %}
 
-<style>
-.header {
-    margin-bottom: 30px;
-}
+<div class="container-fluid py-4">
 
-.header h1 {
-    font-size: 22px;
-    font-weight: 600;
-}
+    <!-- ===================== -->
+    <!-- PAGE HEADER -->
+    <!-- ===================== -->
 
-.card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 24px;
-}
+    <div class="mb-4">
+        <h3 class="fw-bold">Dashboard</h3>
+        <p class="text-muted mb-0">Inventory health overview</p>
+    </div>
 
-table {
-    width: 100%;
-    border-collapse: collapse;
-}
 
-th, td {
-    padding: 14px 10px;
-    border-bottom: 1px solid var(--border);
-    font-size: 14px;
-}
+    <!-- ===================== -->
+    <!-- SUMMARY CARDS -->
+    <!-- ===================== -->
 
-thead {
-    font-size: 12px;
-    color: var(--muted);
-    text-align: left;
-}
+    <div class="row mb-4">
 
-.stock-badge {
-    padding: 4px 8px;
-    border-radius: 6px;
-    font-size: 12px;
-    font-weight: 600;
-}
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <small class="text-muted">Total Products</small>
+                    <h4 class="fw-bold mt-2">{{ total_products }}</h4>
+                </div>
+            </div>
+        </div>
 
-.low {
-    background: rgba(220,53,69,0.1);
-    color: #dc3545;
-}
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <small class="text-muted">Total Units</small>
+                    <h4 class="fw-bold mt-2">{{ total_units }}</h4>
+                </div>
+            </div>
+        </div>
 
-.ok {
-    background: rgba(40,167,69,0.1);
-    color: #28a745;
-}
-</style>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 border-warning">
+                <div class="card-body">
+                    <small class="text-muted">Low Stock</small>
+                    <h4 class="fw-bold text-warning mt-2">
+                        {{ low_stock_products|length }}
+                    </h4>
+                </div>
+            </div>
+        </div>
 
-<div class="header">
-    <h1>Inventory Overview</h1>
-</div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 border-danger">
+                <div class="card-body">
+                    <small class="text-muted">Out of Stock</small>
+                    <h4 class="fw-bold text-danger mt-2">
+                        {{ out_of_stock_products|length }}
+                    </h4>
+                </div>
+            </div>
+        </div>
 
-<div class="card">
+    </div>
 
-    <table>
-        <thead>
-            <tr>
-                <th>Product</th>
-                <th>Current Stock</th>
-                <th>Status</th>
-            </tr>
-        </thead>
 
-        <tbody>
-            {% for product in stock_data %}
-            <tr>
-                <td>{{ product.name }}</td>
-                <td>{{ product.stock }}</td>
-                <td>
-                    {% if product.stock <= 5 %}
-                        <span class="stock-badge low">Low Stock</span>
+    <!-- ===================== -->
+    <!-- ALERT + MOVEMENTS -->
+    <!-- ===================== -->
+
+    <div class="row">
+
+        <!-- LOW STOCK ALERT -->
+        <div class="col-lg-7 mb-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white">
+                    <strong>⚠ Low Stock Alert</strong>
+                </div>
+                <div class="card-body p-0">
+
+                    {% if low_stock_products %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Branch</th>
+                                    <th>Stock</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in low_stock_products %}
+                                <tr>
+                                    <td>{{ item.name }}</td>
+                                    <td>{{ item.branch_name }}</td>
+                                    <td>
+                                        {% if item.stock == 0 %}
+                                            <span class="badge bg-danger">0</span>
+                                        {% else %}
+                                            <span class="badge bg-warning text-dark">
+                                                {{ item.stock }}
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                     {% else %}
-                        <span class="stock-badge ok">In Stock</span>
+                    <div class="p-4 text-center text-muted">
+                        All products are sufficiently stocked.
+                    </div>
                     {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
 
-    </table>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- RECENT MOVEMENTS -->
+        <div class="col-lg-5 mb-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white">
+                    <strong>📦 Recent Stock Movements</strong>
+                </div>
+                <div class="card-body p-0">
+
+                    {% if recent_movements %}
+                    <div class="table-responsive">
+                        <table class="table table-sm mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Product</th>
+                                    <th>Type</th>
+                                    <th>Qty</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for move in recent_movements %}
+                                <tr>
+                                    <td>{{ move.created_at.strftime("%d %b") }}</td>
+                                    <td>{{ move.product_name }}</td>
+                                    <td>
+                                        {% if move.movement_type == "IN" %}
+                                            <span class="badge bg-success">IN</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">ISSUE</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ move.quantity }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="p-4 text-center text-muted">
+                        No recent activity.
+                    </div>
+                    {% endif %}
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+    <!-- ===================== -->
+    <!-- BRANCH SUMMARY -->
+    <!-- ===================== -->
+
+    {% if branches_summary %}
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white">
+            <strong>🏬 Branch Stock Summary</strong>
+        </div>
+        <div class="card-body">
+
+            <div class="row">
+                {% for branch in branches_summary %}
+                <div class="col-md-3 mb-3">
+                    <div class="border rounded p-3">
+                        <small class="text-muted">{{ branch.name }}</small>
+                        <h5 class="fw-bold mt-2">{{ branch.total_units }} units</h5>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+        </div>
+    </div>
+    {% endif %}
 
 </div>
 

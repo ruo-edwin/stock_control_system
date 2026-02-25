@@ -49,7 +49,7 @@ def get_product_stock(
 # =============================
 # INVENTORY OVERVIEW
 # =============================
-@router.get("/overview", response_class=HTMLResponse)
+@router.get("/dashboard", response_class=HTMLResponse)
 def inventory_overview(
     request: Request,
     current_user: models.User = Depends(verify_token),
@@ -84,7 +84,7 @@ def inventory_overview(
     ).all()
 
     return templates.TemplateResponse(
-        "inventory_overview.html",
+        "index.html",
         {
             "request": request,
             "stock_data": stock_data

@@ -10,12 +10,19 @@
 <style>
 :root {
     --bg: #f6f9fc;
-    --sidebar: #111827;
+    --sidebar: #0f172a;
     --card: #ffffff;
     --border: #e6ebf1;
     --text: #1a1f36;
     --muted: #697386;
     --primary: #635bff;
+    --primary-soft: #eef2ff;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+}
+
+* {
+    box-sizing: border-box;
 }
 
 body {
@@ -26,20 +33,32 @@ body {
     display: flex;
 }
 
-/* Sidebar */
+/* =========================
+   SIDEBAR
+========================= */
+
 .sidebar {
-    width: 240px;
+    width: 250px;
     background: var(--sidebar);
     color: white;
     height: 100vh;
-    padding: 24px 16px;
-    box-sizing: border-box;
+    padding: 28px 18px;
     position: fixed;
+    display: flex;
+    flex-direction: column;
 }
 
 .sidebar h2 {
     font-size: 18px;
-    margin-bottom: 30px;
+    margin-bottom: 40px;
+    letter-spacing: 0.5px;
+}
+
+.sidebar-section {
+    font-size: 11px;
+    text-transform: uppercase;
+    color: #64748b;
+    margin: 20px 0 8px;
 }
 
 .sidebar a {
@@ -48,45 +67,192 @@ body {
     text-decoration: none;
     padding: 10px 12px;
     border-radius: 8px;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
     font-size: 14px;
+    transition: all 0.2s ease;
 }
 
 .sidebar a:hover {
-    background: #1f2937;
+    background: rgba(255,255,255,0.05);
     color: white;
 }
 
-/* Content */
-.main {
-    margin-left: 240px;
-    padding: 40px;
-    width: 100%;
-    box-sizing: border-box;
+.sidebar a.active {
+    background: var(--primary);
+    color: white;
 }
 
-/* Cards */
+/* Push logout to bottom */
+.sidebar-footer {
+    margin-top: auto;
+}
+
+/* =========================
+   MAIN CONTENT
+========================= */
+
+.main {
+    margin-left: 250px;
+    width: 100%;
+    min-height: 100vh;
+}
+
+/* Top header bar */
+
+.topbar {
+    background: white;
+    border-bottom: 1px solid var(--border);
+    padding: 18px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.topbar h1 {
+    font-size: 18px;
+    margin: 0;
+}
+
+.topbar small {
+    color: var(--muted);
+}
+
+/* Page content */
+
+.content {
+    padding: 40px;
+}
+
+/* =========================
+   CARDS
+========================= */
+
 .card {
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: 12px;
     padding: 24px;
-    margin-bottom: 20px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
 }
 
-/* Mobile */
+.card-title {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 8px;
+}
+
+.card-value {
+    font-size: 22px;
+    font-weight: 600;
+}
+
+/* Grid system */
+
+.grid-4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+}
+
+.grid-2 {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+}
+
+.grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+/* Tables */
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.table th {
+    text-align: left;
+    padding: 12px;
+    background: #f8fafc;
+    font-weight: 500;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+}
+
+.table td {
+    padding: 12px;
+    border-bottom: 1px solid var(--border);
+}
+
+.badge {
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.badge-danger {
+    background: #fee2e2;
+    color: var(--danger);
+}
+
+.badge-warning {
+    background: #fef3c7;
+    color: var(--warning);
+}
+
+.badge-success {
+    background: #dcfce7;
+    color: #16a34a;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 1024px) {
+    .grid-4 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .grid-2 {
+        grid-template-columns: 1fr;
+    }
+
+    .grid-3 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
 @media (max-width: 768px) {
+    body {
+        flex-direction: column;
+    }
+
     .sidebar {
         position: relative;
         width: 100%;
         height: auto;
     }
+
     .main {
         margin-left: 0;
+    }
+
+    .content {
         padding: 20px;
     }
-    body {
-        flex-direction: column;
+
+    .grid-4 {
+        grid-template-columns: 1fr;
+    }
+
+    .grid-3 {
+        grid-template-columns: 1fr;
     }
 }
 </style>
@@ -94,20 +260,51 @@ body {
 
 <body>
 
+<!-- =========================
+     SIDEBAR
+========================= -->
+
 <div class="sidebar">
     <h2>SmartPOS</h2>
 
-    <a href="/auth/dashboard">Dashboard</a>
-    <a href="/product/list">Products</a>
+    <div class="sidebar-section">Overview</div>
+    <a href="/inventory/dashboard">Dashboard</a>
+
+    <div class="sidebar-section">Inventory</div>
+    <a href="/inventory/products">Products</a>
     <a href="/inventory/assign">Assign Stock</a>
-    <a href="/sales/recordsale">Sales</a>
+    <a href="/inventory/restock">Restock</a>
+
+    <div class="sidebar-section">Management</div>
     <a href="/auth/manage_user">Manage Users</a>
     <a href="/auth/manage_staff">Manage Staff</a>
-    <a href="/auth/logout">Logout</a>
+
+    <div class="sidebar-footer">
+        <a href="/auth/logout">Logout</a>
+    </div>
 </div>
 
+
+<!-- =========================
+     MAIN AREA
+========================= -->
+
 <div class="main">
-    {% block content %}{% endblock %}
+
+    <div class="topbar">
+        <div>
+            <h1>{% block page_title %}Dashboard{% endblock %}</h1>
+            <small>Business inventory system</small>
+        </div>
+        <div>
+            <small>{{ current_user.username if current_user else "" }}</small>
+        </div>
+    </div>
+
+    <div class="content">
+        {% block content %}{% endblock %}
+    </div>
+
 </div>
 
 </body>
