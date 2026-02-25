@@ -1,35 +1,44 @@
 from logging.config import fileConfig
 import os
 
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
-
+from dotenv import load_dotenv
+from sqlalchemy import engine_from_config, pool
 from alembic import context
 
 from backend.db import Base
-import backend.models  # make sure models are registered on Base.metadata
+import backend.models  # ensure models are registered
 
+# -------------------------------------------------
+# Load environment variables from .env
+# -------------------------------------------------
+load_dotenv()
 
-# this is the Alembic Config object, which provides
-# access to the values within the .ini file in use.
+# Alembic Config object
 config = context.config
 
-
 # -------------------------------------------------
-# Force Alembic to use DATABASE_URL from env
-# (prevents it from using old postgresql url in alembic.ini)
+# Force Alembic to use DATABASE_URL from .env
 # -------------------------------------------------
 database_url = os.getenv("DATABASE_URL")
-if database_url:
-    config.set_main_option("sqlalchemy.url", database_url)
 
+if not database_url:
+    raise ValueError("DATABASE_URL not found in environment variables.")
 
-# Interpret the config file for Python logging.
+# Ensure correct driver format for Alembic
+if database_url.startswith("mysql://"):
+    database_url = database_url.replace("mysql://", "mysql+pymysql://", 1)
+
+config.set_main_option("sqlalchemy.url", database_url)
+
+# -------------------------------------------------
+# Configure logging
+# -------------------------------------------------
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-
-# add your model's MetaData object here for 'autogenerate' support
+# -------------------------------------------------
+# Metadata for autogenerate
+# -------------------------------------------------
 target_metadata = Base.metadata
 
 
@@ -42,8 +51,8 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
-        compare_type=True,         # helps detect type changes
-        compare_server_default=True # helps detect default changes
+        compare_type=True,
+        compare_server_default=True,
     )
 
     with context.begin_transaction():
@@ -53,7 +62,7 @@ def run_migrations_offline() -> None:
 def run_migrations_online() -> None:
     """Run migrations in 'online' mode."""
     connectable = engine_from_config(
-        config.get_section(config.config_ini_section, {}),
+        config.get_section(config.config_ini_section),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
@@ -63,7 +72,7 @@ def run_migrations_online() -> None:
             connection=connection,
             target_metadata=target_metadata,
             compare_type=True,
-            compare_server_default=True
+            compare_server_default=True,
         )
 
         with context.begin_transaction():

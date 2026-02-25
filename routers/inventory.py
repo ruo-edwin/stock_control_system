@@ -6,7 +6,7 @@ from backend.db import SessionLocal
 from backend.auth_utils import verify_token
 from fastapi.responses import HTMLResponse, JSONResponse
 from backend.config import templates
-
+from fastapi.responses import RedirectResponse
 
 router = APIRouter(prefix="/inventory", tags=["inventory"])
 
