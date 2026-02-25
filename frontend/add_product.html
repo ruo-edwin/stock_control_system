@@ -4,6 +4,11 @@
 {% block page_title %}Add Product{% endblock %}
 
 {% block content %}
+{% if success %}
+<div style="background:#d4edda;color:#155724;padding:12px;border-radius:6px;margin-bottom:15px;">
+    ✅ {{ success }}
+</div>
+{% endif %}
 
 <div style="max-width: 720px; margin: 0 auto;">
 

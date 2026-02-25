@@ -4,9 +4,8 @@ from sqlalchemy import func
 from backend import models
 from backend.db import SessionLocal
 from backend.auth_utils import verify_token
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from backend.config import templates
-from fastapi.responses import RedirectResponse
 
 router = APIRouter(prefix="/inventory", tags=["inventory"])
 
@@ -35,7 +34,6 @@ def get_product_stock(
         models.StockMovement.business_id == current_user.business_id
     )
 
-    # 🔥 Only restrict branch if NOT admin
     if current_user.role != "admin":
         query = query.filter(
             models.StockMovement.branch_id == current_user.branch_id
@@ -46,26 +44,34 @@ def get_product_stock(
     return JSONResponse({"stock": total_stock})
 
 
+# =============================
+# ADD PRODUCT PAGE
+# =============================
 @router.get("/add_product", response_class=HTMLResponse)
 def add_product_page(
     request: Request,
+    success: str | None = None,
     current_user: models.User = Depends(verify_token)
 ):
-
     if current_user.role not in ["admin", "manager"]:
         raise HTTPException(status_code=403, detail="Access denied")
 
     return templates.TemplateResponse(
         "add_product.html",
-        {"request": request}
+        {"request": request, "success": success}
     )
+
+
+# =============================
+# MANAGE BRANCHES
+# =============================
 @router.get("/manage_branches", response_class=HTMLResponse)
 def manage_branches(
     request: Request,
+    success: str | None = None,
     current_user: models.User = Depends(verify_token),
     db: Session = Depends(get_db)
 ):
-
     if current_user.role != "admin":
         raise HTTPException(status_code=403, detail="Access denied")
 
@@ -77,9 +83,12 @@ def manage_branches(
         "manage_branches.html",
         {
             "request": request,
-            "branches": branches
+            "branches": branches,
+            "success": success
         }
     )
+
+
 # =============================
 # INVENTORY OVERVIEW
 # =============================
@@ -89,7 +98,6 @@ def inventory_overview(
     current_user: models.User = Depends(verify_token),
     db: Session = Depends(get_db)
 ):
-
     if current_user.role not in ["admin", "manager"]:
         raise HTTPException(status_code=403, detail="Not authorized")
 
@@ -98,7 +106,6 @@ def inventory_overview(
         (models.StockMovement.business_id == current_user.business_id)
     )
 
-    # 🔥 Restrict branch only if NOT admin
     if current_user.role != "admin":
         join_condition = join_condition & (
             models.StockMovement.branch_id == current_user.branch_id
@@ -132,6 +139,7 @@ def inventory_overview(
 @router.get("/assign", response_class=HTMLResponse)
 def assign_page(
     request: Request,
+    success: str | None = None,
     current_user: models.User = Depends(verify_token),
     db: Session = Depends(get_db)
 ):
@@ -143,7 +151,6 @@ def assign_page(
         models.Product.business_id == current_user.business_id
     ).all()
 
-    # 🔥 Staff restricted only for non-admin
     staff_query = db.query(models.Staff).filter(
         models.Staff.business_id == current_user.business_id
     )
@@ -175,7 +182,8 @@ def assign_page(
             "request": request,
             "products": products,
             "staff_list": staff_list,
-            "movements": movements
+            "movements": movements,
+            "success": success
         }
     )
 
@@ -186,6 +194,7 @@ def assign_page(
 @router.get("/restock", response_class=HTMLResponse)
 def restock_page(
     request: Request,
+    success: str | None = None,
     current_user: models.User = Depends(verify_token),
     db: Session = Depends(get_db)
 ):
@@ -222,9 +231,12 @@ def restock_page(
             "products": products,
             "movements": movements,
             "branches": branches,
-            "current_user": current_user
+            "current_user": current_user,
+            "success": success
         }
     )
+
+
 # =============================
 # ASSIGN STOCK
 # =============================
@@ -286,7 +298,7 @@ def assign_stock(
 
     movement = models.StockMovement(
         business_id=current_user.business_id,
-        branch_id=staff.branch_id,  # 🔥 movement goes to staff branch
+        branch_id=staff.branch_id,
         product_id=product_id,
         movement_type="ISSUE",
         quantity=-quantity,
@@ -298,17 +310,20 @@ def assign_stock(
     db.add(movement)
     db.commit()
 
-    return {"message": "Stock assigned successfully"}
+    return RedirectResponse(
+        "/inventory/assign?success=Stock assigned successfully",
+        status_code=303
+    )
 
 
-# ===========================
+# =============================
 # RESTOCK
 # =============================
 @router.post("/restock")
 def restock_product(
     product_id: int = Form(...),
     quantity: int = Form(...),
-    branch_id: int = Form(None),  # 🔥 Needed for admin
+    branch_id: int = Form(None),
     supplier: str = Form(None),
     invoice_number: str = Form(None),
     notes: str = Form(None),
@@ -330,7 +345,6 @@ def restock_product(
     if not product:
         raise HTTPException(status_code=400, detail="Invalid product")
 
-    # 🔥 Determine correct branch
     if current_user.role == "manager":
         branch_id_to_use = current_user.branch_id
     else:
@@ -351,7 +365,15 @@ def restock_product(
     db.add(movement)
     db.commit()
 
-    return {"message": "Stock added successfully"}
+    return RedirectResponse(
+        "/inventory/restock?success=Stock added successfully",
+        status_code=303
+    )
+
+
+# =============================
+# CREATE BRANCH
+# =============================
 @router.post("/create_branch")
 def create_branch(
     name: str = Form(...),
@@ -372,8 +394,15 @@ def create_branch(
     db.add(new_branch)
     db.commit()
 
-    return RedirectResponse("/inventory/manage_branches", status_code=303)
+    return RedirectResponse(
+        "/inventory/manage_branches?success=Branch created successfully",
+        status_code=303
+    )
 
+
+# =============================
+# CREATE PRODUCT
+# =============================
 @router.post("/create_product")
 def create_product(
     name: str = Form(...),
@@ -396,4 +425,7 @@ def create_product(
     db.add(new_product)
     db.commit()
 
-    return RedirectResponse("/product/list", status_code=303)
+    return RedirectResponse(
+        "/inventory/add_product?success=Product created successfully",
+        status_code=303
+    )

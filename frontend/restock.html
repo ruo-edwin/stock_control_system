@@ -3,7 +3,11 @@
 {% block title %}Restock | SmartPOS{% endblock %}
 
 {% block content %}
-
+{% if success %}
+<div style="background:#d4edda;color:#155724;padding:12px;border-radius:6px;margin-bottom:15px;">
+    ✅ {{ success }}
+</div>
+{% endif %}
 <style>
 .header {
     margin-bottom: 32px;

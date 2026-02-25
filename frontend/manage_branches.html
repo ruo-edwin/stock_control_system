@@ -3,7 +3,11 @@
 {% block page_title %}Manage Branches{% endblock %}
 
 {% block content %}
-
+{% if success %}
+<div style="background:#d4edda;color:#155724;padding:12px;border-radius:6px;margin-bottom:15px;">
+    ✅ {{ success }}
+</div>
+{% endif %}
 <div class="page-container">
 
     <div class="page-header">
