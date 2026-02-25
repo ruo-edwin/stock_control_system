@@ -4,6 +4,15 @@ from sqlalchemy.ext.declarative import declarative_base
 from dotenv import load_dotenv
 import os
 from pathlib import Path
+from sqlalchemy.orm import Session
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
 
 # ensure we load backend/.env (relative to this file)
 env_path = Path(__file__).resolve().parent / ".env"

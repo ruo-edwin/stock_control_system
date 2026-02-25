@@ -7,6 +7,7 @@ from fastapi import Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from starlette.status import HTTP_401_UNAUTHORIZED
 from backend import models
+from backend.db import get_db
 load_dotenv()
 
 
