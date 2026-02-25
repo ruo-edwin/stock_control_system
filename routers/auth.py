@@ -196,7 +196,7 @@ def register_business(
 
         response = JSONResponse(content={
             "message": "✅ Account created successfully! Redirecting to dashboard...",
-            "redirect": "/auth/dashboard?new=1"
+            "redirect": "/inventory/overview"
         })
 
         response.set_cookie(
@@ -291,7 +291,7 @@ def login_user(username: str = Form(...), password: str = Form(...), db: Session
             expires_delta=access_token_expires
         )
 
-        redirect_url = "/auth/dashboard"
+        redirect_url = "/inventory/overview"
 
         response = RedirectResponse(url=redirect_url, status_code=302)
 
