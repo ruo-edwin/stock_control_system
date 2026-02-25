@@ -1,0 +1,24 @@
+<thead>
+<tr>
+    <th>Product</th>
+    {% for branch in branches %}
+        <th>{{ branch.name }}</th>
+    {% endfor %}
+    <th>Total</th>
+</tr>
+</thead>
+<tbody>
+{% for product in products %}
+<tr>
+    <td>{{ product.name }}</td>
+
+    {% for branch in branches %}
+        <td>
+            {{ product.branches[branch.id] }}
+        </td>
+    {% endfor %}
+
+    <td><strong>{{ product.total }}</strong></td>
+</tr>
+{% endfor %}
+</tbody>

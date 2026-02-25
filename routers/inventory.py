@@ -43,7 +43,72 @@ def get_product_stock(
 
     return JSONResponse({"stock": total_stock})
 
+# =============================
+# PRODUCTS PAGE (MULTI-BRANCH VIEW)
+# =============================
+@router.get("/products", response_class=HTMLResponse)
+def products_page(
+    request: Request,
+    current_user: models.User = Depends(verify_token),
+    db: Session = Depends(get_db)
+):
+    if current_user.role not in ["admin", "manager"]:
+        raise HTTPException(status_code=403, detail="Not authorized")
 
+    # Get branches for this business
+    branches = db.query(models.Branch).filter(
+        models.Branch.business_id == current_user.business_id
+    ).all()
+
+    # Get all products
+    products = db.query(models.Product).filter(
+        models.Product.business_id == current_user.business_id
+    ).all()
+
+    # Get stock grouped by product + branch
+    stock_rows = db.query(
+        models.StockMovement.product_id,
+        models.StockMovement.branch_id,
+        func.coalesce(func.sum(models.StockMovement.quantity), 0).label("quantity")
+    ).filter(
+        models.StockMovement.business_id == current_user.business_id
+    ).group_by(
+        models.StockMovement.product_id,
+        models.StockMovement.branch_id
+    ).all()
+
+    # Convert to dictionary
+    stock_map = {}
+    for row in stock_rows:
+        stock_map.setdefault(row.product_id, {})
+        stock_map[row.product_id][row.branch_id] = row.quantity
+
+    # Structure data for template
+    product_data = []
+
+    for product in products:
+        row = {
+            "id": product.id,
+            "name": product.name,
+            "branches": {},
+            "total": 0
+        }
+
+        for branch in branches:
+            qty = stock_map.get(product.id, {}).get(branch.id, 0)
+            row["branches"][branch.id] = qty
+            row["total"] += qty
+
+        product_data.append(row)
+
+    return templates.TemplateResponse(
+        "products.html",
+        {
+            "request": request,
+            "products": product_data,
+            "branches": branches
+        }
+    )
 # =============================
 # ADD PRODUCT PAGE
 # =============================
