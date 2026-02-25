@@ -1,198 +1,237 @@
+{% set active_page = "dashboard" %}
 {% extends "base.html" %}
+
+{% block page_title %}Dashboard{% endblock %}
 
 {% block content %}
 
-<div class="container-fluid py-4">
-
-    <!-- ===================== -->
-    <!-- PAGE HEADER -->
-    <!-- ===================== -->
-
-    <div class="mb-4">
-        <h3 class="fw-bold">Dashboard</h3>
-        <p class="text-muted mb-0">Inventory health overview</p>
-    </div>
-
+<div style="display:flex; flex-direction:column; gap:30px;">
 
     <!-- ===================== -->
     <!-- SUMMARY CARDS -->
     <!-- ===================== -->
 
-    <div class="row mb-4">
+    <div class="grid-4">
 
-        <div class="col-md-3">
-            <div class="card shadow-sm border-0">
-                <div class="card-body">
-                    <small class="text-muted">Total Products</small>
-                    <h4 class="fw-bold mt-2">{{ total_products }}</h4>
-                </div>
-            </div>
+        <div class="card stat-card">
+            <div class="stat-label">Total Products</div>
+            <div class="stat-value">{{ total_products }}</div>
         </div>
 
-        <div class="col-md-3">
-            <div class="card shadow-sm border-0">
-                <div class="card-body">
-                    <small class="text-muted">Total Units</small>
-                    <h4 class="fw-bold mt-2">{{ total_units }}</h4>
-                </div>
-            </div>
+        <div class="card stat-card">
+            <div class="stat-label">Total Units</div>
+            <div class="stat-value">{{ total_units }}</div>
         </div>
 
-        <div class="col-md-3">
-            <div class="card shadow-sm border-0 border-warning">
-                <div class="card-body">
-                    <small class="text-muted">Low Stock</small>
-                    <h4 class="fw-bold text-warning mt-2">
-                        {{ low_stock_products|length }}
-                    </h4>
-                </div>
-            </div>
+        <div class="card stat-card warning">
+            <div class="stat-label">Low Stock</div>
+            <div class="stat-value">{{ low_stock_products|length }}</div>
         </div>
 
-        <div class="col-md-3">
-            <div class="card shadow-sm border-0 border-danger">
-                <div class="card-body">
-                    <small class="text-muted">Out of Stock</small>
-                    <h4 class="fw-bold text-danger mt-2">
-                        {{ out_of_stock_products|length }}
-                    </h4>
-                </div>
-            </div>
+        <div class="card stat-card danger">
+            <div class="stat-label">Out of Stock</div>
+            <div class="stat-value">{{ out_of_stock_products|length }}</div>
         </div>
 
     </div>
 
-
     <!-- ===================== -->
-    <!-- ALERT + MOVEMENTS -->
+    <!-- MAIN SECTION -->
     <!-- ===================== -->
 
-    <div class="row">
+    <div class="grid-2">
 
-        <!-- LOW STOCK ALERT -->
-        <div class="col-lg-7 mb-4">
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-white">
-                    <strong>⚠ Low Stock Alert</strong>
-                </div>
-                <div class="card-body p-0">
+        <!-- LOW STOCK TABLE -->
+        <div class="card">
 
-                    {% if low_stock_products %}
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Product</th>
-                                    <th>Branch</th>
-                                    <th>Stock</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for item in low_stock_products %}
-                                <tr>
-                                    <td>{{ item.name }}</td>
-                                    <td>{{ item.branch_name }}</td>
-                                    <td>
-                                        {% if item.stock == 0 %}
-                                            <span class="badge bg-danger">0</span>
-                                        {% else %}
-                                            <span class="badge bg-warning text-dark">
-                                                {{ item.stock }}
-                                            </span>
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    {% else %}
-                    <div class="p-4 text-center text-muted">
-                        All products are sufficiently stocked.
-                    </div>
-                    {% endif %}
-
-                </div>
+            <div class="card-header">
+                <h3>Low Stock Alert</h3>
             </div>
-        </div>
 
+            {% if low_stock_products %}
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Branch</th>
+                        <th>Stock</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in low_stock_products %}
+                    <tr>
+                        <td>{{ item.name }}</td>
+                        <td>{{ item.branch_name }}</td>
+                        <td>
+                            {% if item.stock == 0 %}
+                                <span class="badge badge-danger">0</span>
+                            {% else %}
+                                <span class="badge badge-warning">{{ item.stock }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+                <div class="empty-state">
+                    All products are sufficiently stocked.
+                </div>
+            {% endif %}
+
+        </div>
 
         <!-- RECENT MOVEMENTS -->
-        <div class="col-lg-5 mb-4">
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-white">
-                    <strong>📦 Recent Stock Movements</strong>
-                </div>
-                <div class="card-body p-0">
+        <div class="card">
 
-                    {% if recent_movements %}
-                    <div class="table-responsive">
-                        <table class="table table-sm mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Product</th>
-                                    <th>Type</th>
-                                    <th>Qty</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for move in recent_movements %}
-                                <tr>
-                                    <td>{{ move.created_at.strftime("%d %b") }}</td>
-                                    <td>{{ move.product_name }}</td>
-                                    <td>
-                                        {% if move.movement_type == "IN" %}
-                                            <span class="badge bg-success">IN</span>
-                                        {% else %}
-                                            <span class="badge bg-secondary">ISSUE</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>{{ move.quantity }}</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    {% else %}
-                    <div class="p-4 text-center text-muted">
-                        No recent activity.
-                    </div>
-                    {% endif %}
-
-                </div>
+            <div class="card-header">
+                <h3>Recent Stock Movements</h3>
             </div>
+
+            {% if recent_movements %}
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Product</th>
+                        <th>Type</th>
+                        <th>Qty</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for move in recent_movements %}
+                    <tr>
+                        <td>{{ move.created_at.strftime("%d %b") }}</td>
+                        <td>{{ move.product_name }}</td>
+                        <td>
+                            {% if move.movement_type == "IN" %}
+                                <span class="badge badge-success">IN</span>
+                            {% else %}
+                                <span class="badge">ISSUE</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ move.quantity }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+                <div class="empty-state">
+                    No recent activity.
+                </div>
+            {% endif %}
+
         </div>
 
     </div>
-
 
     <!-- ===================== -->
     <!-- BRANCH SUMMARY -->
     <!-- ===================== -->
 
     {% if branches_summary %}
-    <div class="card shadow-sm border-0">
-        <div class="card-header bg-white">
-            <strong>🏬 Branch Stock Summary</strong>
-        </div>
-        <div class="card-body">
+    <div class="card">
 
-            <div class="row">
-                {% for branch in branches_summary %}
-                <div class="col-md-3 mb-3">
-                    <div class="border rounded p-3">
-                        <small class="text-muted">{{ branch.name }}</small>
-                        <h5 class="fw-bold mt-2">{{ branch.total_units }} units</h5>
-                    </div>
-                </div>
-                {% endfor %}
+        <div class="card-header">
+            <h3>Branch Stock Summary</h3>
+        </div>
+
+        <div class="grid-3">
+            {% for branch in branches_summary %}
+            <div class="branch-card">
+                <div class="branch-name">{{ branch.name }}</div>
+                <div class="branch-units">{{ branch.total_units }} units</div>
             </div>
-
+            {% endfor %}
         </div>
+
     </div>
     {% endif %}
 
 </div>
+
+
+<style>
+
+/* ===== SUMMARY CARDS ===== */
+
+.stat-card {
+    padding: 28px;
+    border-radius: 16px;
+    background: white;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.05);
+}
+
+.stat-label {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 8px;
+}
+
+.stat-value {
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+}
+
+.stat-card.warning {
+    border-left: 4px solid #f59e0b;
+}
+
+.stat-card.danger {
+    border-left: 4px solid #ef4444;
+}
+
+/* ===== CARD HEADER ===== */
+
+.card-header {
+    margin-bottom: 20px;
+}
+
+.card-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+/* ===== EMPTY STATE ===== */
+
+.empty-state {
+    padding: 30px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 14px;
+}
+
+/* ===== BRANCH CARDS ===== */
+
+.branch-card {
+    padding: 20px;
+    border-radius: 12px;
+    background: #f8fafc;
+    transition: background 0.2s ease;
+}
+
+.branch-card:hover {
+    background: #eef2ff;
+}
+
+.branch-name {
+    font-size: 14px;
+    color: var(--muted);
+}
+
+.branch-units {
+    font-size: 20px;
+    font-weight: 600;
+    margin-top: 6px;
+}
+
+</style>
 
 {% endblock %}
