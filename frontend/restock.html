@@ -6,7 +6,7 @@
 
 <style>
 .header {
-    margin-bottom: 30px;
+    margin-bottom: 32px;
 }
 
 .header h1 {
@@ -16,58 +16,103 @@
 
 .layout {
     display: grid;
-    grid-template-columns: 400px 1fr;
-    gap: 24px;
+    grid-template-columns: 420px 1fr;
+    gap: 28px;
 }
 
+/* Card */
 .card {
     background: var(--card);
     border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 24px;
+    border-radius: 14px;
+    padding: 28px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.03);
 }
 
+/* Form */
 .form-group {
-    margin-bottom: 16px;
+    margin-bottom: 18px;
 }
 
-label {
+.form-label {
     font-size: 13px;
-    color: var(--muted);
-    display: block;
+    font-weight: 500;
+    color: #425466;
     margin-bottom: 6px;
+    display: block;
 }
 
-input, select, textarea {
+.form-input {
     width: 100%;
-    padding: 10px 12px;
-    border-radius: 8px;
+    padding: 11px 12px;
+    border-radius: 10px;
     border: 1px solid var(--border);
     font-size: 14px;
+    background: white;
+    transition: all 0.2s ease;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(99,91,255,0.15);
+}
+
+.disabled-input {
+    background: #f6f9fc;
+    color: #94a3b8;
+    cursor: not-allowed;
 }
 
 button {
-    padding: 10px 18px;
-    border-radius: 8px;
+    margin-top: 10px;
+    padding: 11px 20px;
+    border-radius: 10px;
     border: none;
     background: var(--primary);
     color: white;
     font-weight: 600;
     cursor: pointer;
+    transition: all 0.2s ease;
 }
 
+button:hover {
+    opacity: 0.9;
+}
+
+/* Table */
 table {
     width: 100%;
     border-collapse: collapse;
 }
 
-th, td {
-    padding: 14px 8px;
+th {
+    text-align: left;
+    font-size: 13px;
+    color: var(--muted);
+    padding-bottom: 10px;
+}
+
+td {
+    padding: 14px 0;
     border-bottom: 1px solid var(--border);
     font-size: 14px;
 }
 
-@media (max-width: 900px) {
+.badge {
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.badge-in {
+    background: #dcfce7;
+    color: #16a34a;
+}
+
+/* Responsive */
+@media (max-width: 1000px) {
     .layout {
         grid-template-columns: 1fr;
     }
@@ -80,15 +125,43 @@ th, td {
 
 <div class="layout">
 
-    <!-- RESTOCK FORM -->
+    <!-- =========================
+         RESTOCK FORM
+    ========================= -->
     <div class="card">
-        <h3>Add Stock</h3>
+        <h3 style="margin-bottom:20px;">Add Stock</h3>
 
         <form method="POST" action="/inventory/restock">
 
+            <!-- Branch Logic -->
             <div class="form-group">
-                <label>Product</label>
-                <select name="product_id" required>
+                <label class="form-label">Branch</label>
+
+                {% if current_user.role == "admin" %}
+                    <select name="branch_id" class="form-input" required>
+                        <option value="">Select branch</option>
+                        {% for branch in branches %}
+                            <option value="{{ branch.id }}">{{ branch.name }}</option>
+                        {% endfor %}
+                    </select>
+                {% else %}
+                    <input 
+                        type="text"
+                        value="{{ current_user.branch.name }}"
+                        class="form-input disabled-input"
+                        disabled
+                    >
+                    <input 
+                        type="hidden"
+                        name="branch_id"
+                        value="{{ current_user.branch_id }}"
+                    >
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Product</label>
+                <select name="product_id" class="form-input" required>
                     <option value="">Select product</option>
                     {% for product in products %}
                         <option value="{{ product.id }}">{{ product.name }}</option>
@@ -97,23 +170,23 @@ th, td {
             </div>
 
             <div class="form-group">
-                <label>Quantity</label>
-                <input type="number" name="quantity" min="1" required>
+                <label class="form-label">Quantity</label>
+                <input type="number" name="quantity" min="1" class="form-input" required>
             </div>
 
             <div class="form-group">
-                <label>Supplier (optional)</label>
-                <input type="text" name="supplier">
+                <label class="form-label">Supplier (optional)</label>
+                <input type="text" name="supplier" class="form-input">
             </div>
 
             <div class="form-group">
-                <label>Invoice Number (optional)</label>
-                <input type="text" name="invoice_number">
+                <label class="form-label">Invoice Number (optional)</label>
+                <input type="text" name="invoice_number" class="form-input">
             </div>
 
             <div class="form-group">
-                <label>Notes</label>
-                <textarea name="notes" rows="3"></textarea>
+                <label class="form-label">Notes</label>
+                <textarea name="notes" rows="3" class="form-input"></textarea>
             </div>
 
             <button type="submit">Add Stock</button>
@@ -121,14 +194,19 @@ th, td {
         </form>
     </div>
 
-    <!-- RECENT RESTOCKS -->
-    <div class="card">
-        <h3>Recent Restocks</h3>
 
+    <!-- =========================
+         RECENT RESTOCKS
+    ========================= -->
+    <div class="card">
+        <h3 style="margin-bottom:20px;">Recent Restocks</h3>
+
+        {% if movements %}
         <table>
             <thead>
                 <tr>
                     <th>Product</th>
+                    <th>Branch</th>
                     <th>Qty</th>
                     <th>Date</th>
                 </tr>
@@ -137,12 +215,20 @@ th, td {
                 {% for movement in movements %}
                 <tr>
                     <td>{{ movement.product.name }}</td>
-                    <td>{{ movement.quantity }}</td>
-                    <td>{{ movement.created_at }}</td>
+                    <td>{{ movement.branch.name }}</td>
+                    <td>
+                        <span class="badge badge-in">
+                            +{{ movement.quantity }}
+                        </span>
+                    </td>
+                    <td>{{ movement.created_at.strftime("%d %b %Y") }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
+        {% else %}
+            <p style="color: var(--muted);">No restock activity yet.</p>
+        {% endif %}
     </div>
 
 </div>

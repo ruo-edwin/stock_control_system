@@ -197,6 +197,10 @@ def restock_page(
         models.Product.business_id == current_user.business_id
     ).all()
 
+    branches = db.query(models.Branch).filter(
+        models.Branch.business_id == current_user.business_id
+    ).all()
+
     movements_query = db.query(models.StockMovement).filter(
         models.StockMovement.business_id == current_user.business_id,
         models.StockMovement.movement_type == "IN"
@@ -216,11 +220,11 @@ def restock_page(
         {
             "request": request,
             "products": products,
-            "movements": movements
+            "movements": movements,
+            "branches": branches,
+            "current_user": current_user
         }
     )
-
-
 # =============================
 # ASSIGN STOCK
 # =============================
@@ -297,13 +301,14 @@ def assign_stock(
     return {"message": "Stock assigned successfully"}
 
 
-# =============================
+# ===========================
 # RESTOCK
 # =============================
 @router.post("/restock")
 def restock_product(
     product_id: int = Form(...),
     quantity: int = Form(...),
+    branch_id: int = Form(None),  # 🔥 Needed for admin
     supplier: str = Form(None),
     invoice_number: str = Form(None),
     notes: str = Form(None),
@@ -325,9 +330,17 @@ def restock_product(
     if not product:
         raise HTTPException(status_code=400, detail="Invalid product")
 
+    # 🔥 Determine correct branch
+    if current_user.role == "manager":
+        branch_id_to_use = current_user.branch_id
+    else:
+        if not branch_id:
+            raise HTTPException(status_code=400, detail="Branch is required")
+        branch_id_to_use = branch_id
+
     movement = models.StockMovement(
         business_id=current_user.business_id,
-        branch_id=current_user.branch_id if current_user.role != "admin" else None,
+        branch_id=branch_id_to_use,
         product_id=product_id,
         movement_type="IN",
         quantity=quantity,
@@ -339,7 +352,6 @@ def restock_product(
     db.commit()
 
     return {"message": "Stock added successfully"}
-
 @router.post("/create_branch")
 def create_branch(
     name: str = Form(...),
