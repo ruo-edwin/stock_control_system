@@ -32,12 +32,16 @@ def get_db():
 def get_dashboard(
     request: Request,
     current_user: models.User = Depends(verify_token),
+    db: Session = Depends(get_db),
 ):
-    business_name = (
-        current_user.business.business_name
-        if current_user.business_id
-        else "Superadmin"
-    )
+    business_name = "Superadmin"
+
+    if current_user.business_id:
+        biz = db.query(models.Business).filter(
+            models.Business.id == current_user.business_id
+        ).first()
+        if biz:
+            business_name = biz.business_name
 
     return templates.TemplateResponse(
         "index.html",

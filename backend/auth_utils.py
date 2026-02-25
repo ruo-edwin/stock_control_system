@@ -31,14 +31,11 @@ def blacklist_token(token: str):
     token_blacklist.add(token)
 
 
-
-def verify_token(request: Request):
+def verify_token(request: Request, db: Session = Depends(get_db)):
     token = request.cookies.get("access_token")
 
     if not token or token in token_blacklist:
-        if request.url.path.startswith("/api") or request.headers.get("accept") == "application/json":
-            raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="Not authenticated")
-        return RedirectResponse(url="/auth/login")
+        raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="Not authenticated")
 
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -47,16 +44,12 @@ def verify_token(request: Request):
         if not user_id:
             raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="Invalid token")
 
-        db = SessionLocal()
         user = db.query(models.User).filter(models.User.id == user_id).first()
-        db.close()
 
         if not user:
             raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="User not found")
 
-        return user  # 🔥 RETURN FULL USER OBJECT
+        return user
 
     except JWTError:
-        if request.url.path.startswith("/api") or request.headers.get("accept") == "application/json":
-            raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="Invalid or expired token")
-        return RedirectResponse(url="/auth/login")
+        raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="Invalid or expired token")
