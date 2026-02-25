@@ -19,23 +19,36 @@ def get_db():
         db.close()
 
 
+# =============================
+# PRODUCT STOCK
+# =============================
 @router.get("/product_stock/{product_id}")
 def get_product_stock(
     product_id: int,
     current_user: models.User = Depends(verify_token),
     db: Session = Depends(get_db)
 ):
-    total_stock = db.query(
+    query = db.query(
         func.coalesce(func.sum(models.StockMovement.quantity), 0)
     ).filter(
         models.StockMovement.product_id == product_id,
-        models.StockMovement.branch_id == current_user.branch_id,
         models.StockMovement.business_id == current_user.business_id
-    ).scalar()
+    )
+
+    # 🔥 Only restrict branch if NOT admin
+    if current_user.role != "admin":
+        query = query.filter(
+            models.StockMovement.branch_id == current_user.branch_id
+        )
+
+    total_stock = query.scalar()
 
     return JSONResponse({"stock": total_stock})
 
 
+# =============================
+# INVENTORY OVERVIEW
+# =============================
 @router.get("/overview", response_class=HTMLResponse)
 def inventory_overview(
     request: Request,
@@ -46,15 +59,24 @@ def inventory_overview(
     if current_user.role not in ["admin", "manager"]:
         raise HTTPException(status_code=403, detail="Not authorized")
 
+    join_condition = (
+        (models.StockMovement.product_id == models.Product.id) &
+        (models.StockMovement.business_id == current_user.business_id)
+    )
+
+    # 🔥 Restrict branch only if NOT admin
+    if current_user.role != "admin":
+        join_condition = join_condition & (
+            models.StockMovement.branch_id == current_user.branch_id
+        )
+
     stock_data = db.query(
         models.Product.id,
         models.Product.name,
         func.coalesce(func.sum(models.StockMovement.quantity), 0).label("stock")
     ).outerjoin(
         models.StockMovement,
-        (models.StockMovement.product_id == models.Product.id) &
-        (models.StockMovement.branch_id == current_user.branch_id) &
-        (models.StockMovement.business_id == current_user.business_id)
+        join_condition
     ).filter(
         models.Product.business_id == current_user.business_id
     ).group_by(
@@ -70,6 +92,9 @@ def inventory_overview(
     )
 
 
+# =============================
+# ASSIGN PAGE
+# =============================
 @router.get("/assign", response_class=HTMLResponse)
 def assign_page(
     request: Request,
@@ -84,16 +109,31 @@ def assign_page(
         models.Product.business_id == current_user.business_id
     ).all()
 
-    staff_list = db.query(models.Staff).filter(
-        models.Staff.branch_id == current_user.branch_id,
+    # 🔥 Staff restricted only for non-admin
+    staff_query = db.query(models.Staff).filter(
         models.Staff.business_id == current_user.business_id
-    ).all()
+    )
 
-    movements = db.query(models.StockMovement).filter(
-        models.StockMovement.branch_id == current_user.branch_id,
+    if current_user.role != "admin":
+        staff_query = staff_query.filter(
+            models.Staff.branch_id == current_user.branch_id
+        )
+
+    staff_list = staff_query.all()
+
+    movements_query = db.query(models.StockMovement).filter(
         models.StockMovement.business_id == current_user.business_id,
         models.StockMovement.movement_type == "ISSUE"
-    ).order_by(models.StockMovement.created_at.desc()).limit(10).all()
+    )
+
+    if current_user.role != "admin":
+        movements_query = movements_query.filter(
+            models.StockMovement.branch_id == current_user.branch_id
+        )
+
+    movements = movements_query.order_by(
+        models.StockMovement.created_at.desc()
+    ).limit(10).all()
 
     return templates.TemplateResponse(
         "assign_stock.html",
@@ -106,6 +146,9 @@ def assign_page(
     )
 
 
+# =============================
+# RESTOCK PAGE
+# =============================
 @router.get("/restock", response_class=HTMLResponse)
 def restock_page(
     request: Request,
@@ -120,11 +163,19 @@ def restock_page(
         models.Product.business_id == current_user.business_id
     ).all()
 
-    movements = db.query(models.StockMovement).filter(
-        models.StockMovement.branch_id == current_user.branch_id,
+    movements_query = db.query(models.StockMovement).filter(
         models.StockMovement.business_id == current_user.business_id,
         models.StockMovement.movement_type == "IN"
-    ).order_by(models.StockMovement.created_at.desc()).limit(10).all()
+    )
+
+    if current_user.role != "admin":
+        movements_query = movements_query.filter(
+            models.StockMovement.branch_id == current_user.branch_id
+        )
+
+    movements = movements_query.order_by(
+        models.StockMovement.created_at.desc()
+    ).limit(10).all()
 
     return templates.TemplateResponse(
         "restock.html",
@@ -136,6 +187,9 @@ def restock_page(
     )
 
 
+# =============================
+# ASSIGN STOCK
+# =============================
 @router.post("/assign_stock")
 def assign_stock(
     product_id: int = Form(...),
@@ -152,11 +206,17 @@ def assign_stock(
     if quantity <= 0:
         raise HTTPException(status_code=400, detail="Quantity must be greater than zero")
 
-    staff = db.query(models.Staff).filter(
+    staff_query = db.query(models.Staff).filter(
         models.Staff.id == staff_id,
-        models.Staff.branch_id == current_user.branch_id,
         models.Staff.business_id == current_user.business_id
-    ).first()
+    )
+
+    if current_user.role != "admin":
+        staff_query = staff_query.filter(
+            models.Staff.branch_id == current_user.branch_id
+        )
+
+    staff = staff_query.first()
 
     if not staff:
         raise HTTPException(status_code=400, detail="Invalid staff")
@@ -169,20 +229,26 @@ def assign_stock(
     if not product:
         raise HTTPException(status_code=400, detail="Invalid product")
 
-    current_stock = db.query(
+    stock_query = db.query(
         func.coalesce(func.sum(models.StockMovement.quantity), 0)
     ).filter(
         models.StockMovement.product_id == product_id,
-        models.StockMovement.branch_id == current_user.branch_id,
         models.StockMovement.business_id == current_user.business_id
-    ).scalar()
+    )
+
+    if current_user.role != "admin":
+        stock_query = stock_query.filter(
+            models.StockMovement.branch_id == current_user.branch_id
+        )
+
+    current_stock = stock_query.scalar()
 
     if current_stock < quantity:
         raise HTTPException(status_code=400, detail="Not enough stock")
 
     movement = models.StockMovement(
         business_id=current_user.business_id,
-        branch_id=current_user.branch_id,
+        branch_id=staff.branch_id,  # 🔥 movement goes to staff branch
         product_id=product_id,
         movement_type="ISSUE",
         quantity=-quantity,
@@ -197,6 +263,9 @@ def assign_stock(
     return {"message": "Stock assigned successfully"}
 
 
+# =============================
+# RESTOCK
+# =============================
 @router.post("/restock")
 def restock_product(
     product_id: int = Form(...),
@@ -224,7 +293,7 @@ def restock_product(
 
     movement = models.StockMovement(
         business_id=current_user.business_id,
-        branch_id=current_user.branch_id,
+        branch_id=current_user.branch_id if current_user.role != "admin" else None,
         product_id=product_id,
         movement_type="IN",
         quantity=quantity,
