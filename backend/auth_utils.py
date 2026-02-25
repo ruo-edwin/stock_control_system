@@ -8,6 +8,7 @@ from fastapi.responses import RedirectResponse
 from starlette.status import HTTP_401_UNAUTHORIZED
 from backend import models
 from backend.db import get_db
+from sqlalchemy.orm import Session
 load_dotenv()
 
 
