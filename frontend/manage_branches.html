@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block page_title %}Manage Branches{% endblock %}
+
+{% block content %}
+
+<div class="page-container">
+
+    <div class="page-header">
+        <h1>Branches</h1>
+        <p>Create and manage your business locations</p>
+    </div>
+
+    <!-- Add Branch -->
+    <div class="card" style="margin-bottom:30px;">
+        <form method="post" action="/inventory/create_branch">
+            <input type="text" name="name" placeholder="Branch Name" required>
+            <input type="text" name="location" placeholder="Location">
+            <button type="submit" class="btn-primary">Add Branch</button>
+        </form>
+    </div>
+
+    <!-- Branch List -->
+    <div class="card">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Location</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for branch in branches %}
+                <tr>
+                    <td>{{ branch.name }}</td>
+                    <td>{{ branch.location }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+{% endblock %}

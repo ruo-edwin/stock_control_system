@@ -46,6 +46,40 @@ def get_product_stock(
     return JSONResponse({"stock": total_stock})
 
 
+@router.get("/add_product", response_class=HTMLResponse)
+def add_product_page(
+    request: Request,
+    current_user: models.User = Depends(verify_token)
+):
+
+    if current_user.role not in ["admin", "manager"]:
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    return templates.TemplateResponse(
+        "add_product.html",
+        {"request": request}
+    )
+@router.get("/manage_branches", response_class=HTMLResponse)
+def manage_branches(
+    request: Request,
+    current_user: models.User = Depends(verify_token),
+    db: Session = Depends(get_db)
+):
+
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    branches = db.query(models.Branch).filter(
+        models.Branch.business_id == current_user.business_id
+    ).all()
+
+    return templates.TemplateResponse(
+        "manage_branches.html",
+        {
+            "request": request,
+            "branches": branches
+        }
+    )
 # =============================
 # INVENTORY OVERVIEW
 # =============================
@@ -305,3 +339,49 @@ def restock_product(
     db.commit()
 
     return {"message": "Stock added successfully"}
+
+@router.post("/create_branch")
+def create_branch(
+    name: str = Form(...),
+    location: str = Form(None),
+    current_user: models.User = Depends(verify_token),
+    db: Session = Depends(get_db)
+):
+
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    new_branch = models.Branch(
+        business_id=current_user.business_id,
+        name=name,
+        location=location
+    )
+
+    db.add(new_branch)
+    db.commit()
+
+    return RedirectResponse("/inventory/manage_branches", status_code=303)
+
+@router.post("/create_product")
+def create_product(
+    name: str = Form(...),
+    buying_price: float = Form(0),
+    min_stock: int = Form(5),
+    current_user: models.User = Depends(verify_token),
+    db: Session = Depends(get_db)
+):
+
+    if current_user.role not in ["admin", "manager"]:
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    new_product = models.Product(
+        business_id=current_user.business_id,
+        name=name,
+        buying_price=buying_price,
+        min_stock=min_stock
+    )
+
+    db.add(new_product)
+    db.commit()
+
+    return RedirectResponse("/product/list", status_code=303)

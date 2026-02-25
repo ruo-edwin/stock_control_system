@@ -15,15 +15,16 @@
     --border: #e6ebf1;
     --text: #1a1f36;
     --muted: #697386;
+
     --primary: #635bff;
-    --primary-soft: #eef2ff;
+    --primary-2: #7c3aed; /* optional purple depth */
+    --primary-soft: rgba(99,91,255,0.12);
+
     --danger: #ef4444;
     --warning: #f59e0b;
 }
 
-* {
-    box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 body {
     margin: 0;
@@ -38,38 +39,64 @@ body {
 ========================= */
 
 .sidebar {
-    width: 250px;
+    width: 260px;
     background: var(--sidebar);
     color: white;
     height: 100vh;
-    padding: 28px 18px;
+    padding: 26px 16px;
     position: fixed;
     display: flex;
     flex-direction: column;
 }
 
-.sidebar h2 {
-    font-size: 18px;
-    margin-bottom: 40px;
-    letter-spacing: 0.5px;
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 26px;
+    padding: 0 8px;
+}
+
+.brand-badge {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-2));
+    box-shadow: 0 8px 20px rgba(99,91,255,0.25);
+}
+
+.brand h2 {
+    font-size: 16px;
+    margin: 0;
+    letter-spacing: 0.2px;
+    font-weight: 600;
 }
 
 .sidebar-section {
     font-size: 11px;
     text-transform: uppercase;
     color: #64748b;
-    margin: 20px 0 8px;
+    margin: 18px 10px 8px;
+    letter-spacing: 0.8px;
+}
+
+.nav {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
 .sidebar a {
-    display: block;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
     color: #cbd5e1;
     text-decoration: none;
     padding: 10px 12px;
-    border-radius: 8px;
-    margin-bottom: 4px;
+    border-radius: 10px;
     font-size: 14px;
-    transition: all 0.2s ease;
+    transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease;
 }
 
 .sidebar a:hover {
@@ -77,14 +104,37 @@ body {
     color: white;
 }
 
+/* Premium active state */
 .sidebar a.active {
-    background: var(--primary);
-    color: white;
+    background: rgba(99,91,255,0.18);
+    color: #ffffff;
+    box-shadow: inset 0 0 0 1px rgba(99,91,255,0.25);
+}
+
+/* Left indicator bar */
+.sidebar a.active::before {
+    content: "";
+    position: absolute;
+    left: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 18px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, var(--primary), var(--primary-2));
+    box-shadow: 0 0 18px rgba(99,91,255,0.45);
+}
+
+/* Slight shift for active */
+.sidebar a.active {
+    padding-left: 18px;
 }
 
 /* Push logout to bottom */
 .sidebar-footer {
     margin-top: auto;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255,255,255,0.08);
 }
 
 /* =========================
@@ -92,13 +142,12 @@ body {
 ========================= */
 
 .main {
-    margin-left: 250px;
+    margin-left: 260px;
     width: 100%;
     min-height: 100vh;
 }
 
 /* Top header bar */
-
 .topbar {
     background: white;
     border-bottom: 1px solid var(--border);
@@ -111,69 +160,29 @@ body {
 .topbar h1 {
     font-size: 18px;
     margin: 0;
+    letter-spacing: 0.2px;
 }
 
-.topbar small {
-    color: var(--muted);
-}
+.topbar small { color: var(--muted); }
 
-/* Page content */
+.content { padding: 40px; }
 
-.content {
-    padding: 40px;
-}
-
-/* =========================
-   CARDS
-========================= */
-
+/* Cards */
 .card {
     background: var(--card);
     border: 1px solid var(--border);
-    border-radius: 12px;
+    border-radius: 14px;
     padding: 24px;
     box-shadow: 0 1px 2px rgba(0,0,0,0.03);
 }
 
-.card-title {
-    font-size: 13px;
-    color: var(--muted);
-    margin-bottom: 8px;
-}
-
-.card-value {
-    font-size: 22px;
-    font-weight: 600;
-}
-
 /* Grid system */
-
-.grid-4 {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
-}
-
-.grid-2 {
-    display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 20px;
-}
-
-.grid-3 {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
-}
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+.grid-2 { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
 
 /* Tables */
-
-.table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 14px;
-}
-
+.table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .table th {
     text-align: left;
     padding: 12px;
@@ -182,113 +191,105 @@ body {
     color: var(--muted);
     border-bottom: 1px solid var(--border);
 }
+.table td { padding: 12px; border-bottom: 1px solid var(--border); }
 
-.table td {
-    padding: 12px;
-    border-bottom: 1px solid var(--border);
-}
-
-.badge {
-    padding: 4px 8px;
-    border-radius: 6px;
-    font-size: 12px;
-    font-weight: 500;
-}
-
-.badge-danger {
-    background: #fee2e2;
-    color: var(--danger);
-}
-
-.badge-warning {
-    background: #fef3c7;
-    color: var(--warning);
-}
-
-.badge-success {
-    background: #dcfce7;
-    color: #16a34a;
-}
+.badge { padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 500; }
+.badge-danger { background: #fee2e2; color: var(--danger); }
+.badge-warning { background: #fef3c7; color: var(--warning); }
+.badge-success { background: #dcfce7; color: #16a34a; }
 
 /* =========================
    RESPONSIVE
 ========================= */
 
 @media (max-width: 1024px) {
-    .grid-4 {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
-    .grid-2 {
-        grid-template-columns: 1fr;
-    }
-
-    .grid-3 {
-        grid-template-columns: repeat(2, 1fr);
-    }
+    .grid-4 { grid-template-columns: repeat(2, 1fr); }
+    .grid-2 { grid-template-columns: 1fr; }
+    .grid-3 { grid-template-columns: repeat(2, 1fr); }
 }
 
 @media (max-width: 768px) {
-    body {
-        flex-direction: column;
-    }
-
-    .sidebar {
-        position: relative;
-        width: 100%;
-        height: auto;
-    }
-
-    .main {
-        margin-left: 0;
-    }
-
-    .content {
-        padding: 20px;
-    }
-
-    .grid-4 {
-        grid-template-columns: 1fr;
-    }
-
-    .grid-3 {
-        grid-template-columns: 1fr;
-    }
+    body { flex-direction: column; }
+    .sidebar { position: relative; width: 100%; height: auto; }
+    .main { margin-left: 0; }
+    .content { padding: 20px; }
+    .grid-4, .grid-3 { grid-template-columns: 1fr; }
 }
 </style>
 </head>
 
 <body>
 
+{% set path = request.url.path if request else "" %}
+{% set ap = active_page if active_page is defined else "" %}
+
 <!-- =========================
      SIDEBAR
 ========================= -->
-
 <div class="sidebar">
-    <h2>SmartPOS</h2>
+
+    <div class="brand">
+        <div class="brand-badge"></div>
+        <h2>SmartPOS</h2>
+    </div>
 
     <div class="sidebar-section">Overview</div>
-    <a href="/inventory/dashboard">Dashboard</a>
+    <div class="nav">
+        <a href="/inventory/dashboard"
+           class="{% if ap=='dashboard' or path.startswith('/inventory/dashboard') %}active{% endif %}">
+           Dashboard
+        </a>
+    </div>
 
     <div class="sidebar-section">Inventory</div>
-    <a href="/inventory/products">Products</a>
-    <a href="/inventory/assign">Assign Stock</a>
-    <a href="/inventory/restock">Restock</a>
+    <div class="nav">
+        <a href="/inventory/products"
+           class="{% if ap=='products' or path.startswith('/inventory/products') %}active{% endif %}">
+           Products
+        </a>
+
+        <a href="/inventory/add_product"
+           class="{% if ap=='add_product' or path.startswith('/inventory/add_product') %}active{% endif %}">
+           Add Product
+        </a>
+
+        <a href="/inventory/assign"
+           class="{% if ap=='assign' or path.startswith('/inventory/assign') %}active{% endif %}">
+           Assign Stock
+        </a>
+
+        <a href="/inventory/restock"
+           class="{% if ap=='restock' or path.startswith('/inventory/restock') %}active{% endif %}">
+           Restock
+        </a>
+
+    </div>
 
     <div class="sidebar-section">Management</div>
-    <a href="/auth/manage_user">Manage Users</a>
-    <a href="/auth/manage_staff">Manage Staff</a>
+    <div class="nav">
+        <a href="/auth/manage_user"
+           class="{% if ap=='users' or path.startswith('/auth/manage_user') %}active{% endif %}">
+           Manage Users
+        </a>
+
+        <a href="/auth/manage_staff"
+           class="{% if ap=='staff' or path.startswith('/auth/manage_staff') %}active{% endif %}">
+           Manage Staff
+        </a>
+         <a href="/inventory/manage_branches"
+           class="{% if ap=='branches' or path.startswith('/inventory/manage_branches') %}active{% endif %}">
+           Manage Branches
+        </a>
+    </div>
 
     <div class="sidebar-footer">
         <a href="/auth/logout">Logout</a>
     </div>
 </div>
 
-
 <!-- =========================
      MAIN AREA
 ========================= -->
-
 <div class="main">
 
     <div class="topbar">

@@ -1,237 +1,41 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <!-- PWA -->
-<link rel="manifest" href="/static/manifest.json">
-<meta name="theme-color" content="#635bff">
+{% extends "base.html" %}
 
-<!-- iOS support -->
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="SmartPOS">
-<link rel="apple-touch-icon" href="/static/icons/icon-192.png">
+{% block page_title %}Add Product{% endblock %}
 
-  <title>Add Product | SmartPOS</title>
+{% block content %}
 
-  <!-- Stripe Font -->
-  <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+<div class="page-container">
 
-  <style>
-    :root {
-      --accent: #4f46e5;
-      --accent-strong: #6366f1;
+    <div class="page-header">
+        <h1>Add Product</h1>
+        <p>Create a new inventory item</p>
+    </div>
 
-      --bg-light: #f7f9fc;
-      --bg-gradient: linear-gradient(135deg, #fafcff 0%, #eef2f7 50%, #e2e8f3 100%);
+    <div class="card">
 
-      --card-bg: #ffffff;
-      --border-soft: rgba(0,0,0,0.08);
-      --text-main: #1f2937;
-      --text-muted: #6b7280;
+        <form method="post" action="/inventory/create_product">
 
-      --radius: 18px;
-      --shadow-soft: 0 20px 45px rgba(0,0,0,0.08);
-    }
+            <div style="margin-bottom:20px;">
+                <label>Product Name</label>
+                <input type="text" name="name" required>
+            </div>
 
-    * {
-      box-sizing: border-box;
-      font-family: "Inter", system-ui, sans-serif;
-    }
+            <div style="margin-bottom:20px;">
+                <label>Buying Price</label>
+                <input type="number" step="0.01" name="buying_price">
+            </div>
 
-    body {
-      margin: 0;
-      padding: 30px 16px;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      background: var(--bg-gradient);
-    }
+            <div style="margin-bottom:20px;">
+                <label>Minimum Stock Alert Level</label>
+                <input type="number" name="min_stock" value="5">
+            </div>
 
-    h1 {
-      font-size: 2rem;
-      margin-bottom: 20px;
-      background: linear-gradient(90deg, #1f2937, var(--accent-strong));
-      background-clip: text;
-      -webkit-background-clip: text;
-      color: transparent;
-      letter-spacing: -0.03em;
-      font-weight: 700;
-    }
+            <button type="submit" class="btn-primary">Create Product</button>
 
-    /* Form Container */
-    .form-card {
-      background: var(--card-bg);
-      padding: 28px;
-      width: 100%;
-      max-width: 420px;
-      border-radius: var(--radius);
-      box-shadow: var(--shadow-soft);
-      border: 1px solid var(--border-soft);
-      animation: fadeIn 0.4s ease;
-    }
+        </form>
 
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
+    </div>
 
-    .form-card input {
-      width: 100%;
-      padding: 13px;
-      margin-top: 12px;
-      border-radius: 12px;
-      border: 1px solid #cbd5e1;
-      background: #f8fafc;
-      font-size: 0.95rem;
-      outline: none;
-      transition: 0.15s;
-    }
+</div>
 
-    .form-card input:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
-    }
-
-    /* Button */
-    .submit-btn {
-      width: 100%;
-      padding: 14px;
-      margin-top: 20px;
-      border: none;
-      border-radius: 12px;
-      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
-      color: white;
-      font-weight: 600;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: 0.25s;
-      box-shadow: 0 12px 28px rgba(79,70,229,0.25);
-    }
-
-    .submit-btn:hover {
-      transform: translateY(-2px);
-      filter: brightness(1.06);
-    }
-
-    #message {
-      margin-top: 15px;
-      font-weight: 600;
-      text-align: center;
-      font-size: 1rem;
-    }
-
-    /* Back Link */
-    .back-link {
-      margin-top: 20px;
-      color: var(--accent);
-      text-decoration: none;
-      font-weight: 600;
-      transition: 0.2s;
-    }
-
-    .back-link:hover {
-      color: var(--accent-strong);
-    }
-
-  </style>
-</head>
-
-<body>
-
-  <h1>Add Product</h1>
-
-  <form id="productForm" class="form-card">
-    <input type="text" id="name" placeholder="Product Name" required>
-    <input type="number" id="quantity" placeholder="Quantity" required>
-    <input type="number" step="0.01" id="buying_price" placeholder="Buying Price" required>
-    <input type="number" step="0.01" id="price" placeholder="Selling Price" required>
-
-    <button type="submit" class="submit-btn" id="submitBtn">Add Product</button>
-  </form>
-
-  <p id="message"></p>
-
-  <a class="back-link" href="https://pos-10-production.up.railway.app/auth/dashboard">⬅ Back to Home</a>
-
-  <script>
-    const BASE_URL = "https://pos-10-production.up.railway.app";
-
-    // ✅ Detect onboarding mode from URL
-    const params = new URLSearchParams(window.location.search);
-    const isOnboarding = params.get("source") === "onboarding";
-
-    // ✅ Change button text in onboarding mode
-    const submitBtn = document.getElementById("submitBtn");
-    if (isOnboarding && submitBtn) {
-      submitBtn.textContent = "Save & Record First Sale";
-    }
-
-    document.getElementById('productForm').addEventListener('submit', async function(e) {
-      e.preventDefault();
-
-      const name = document.getElementById('name').value;
-      const quantity = document.getElementById('quantity').value;
-      const price = document.getElementById('price').value;
-      const buying_price = document.getElementById('buying_price').value;
-
-      const message = document.getElementById('message');
-
-      const formData = new FormData();
-      formData.append('name', name);
-      formData.append('quantity', quantity);
-      formData.append('price', price);
-      formData.append('buying_price', buying_price);
-
-      try {
-        // ✅ Include source=onboarding in the POST so backend can redirect
-        const postUrl = isOnboarding
-          ? `${BASE_URL}/products/add_product?source=onboarding`
-          : `${BASE_URL}/products/add_product`;
-
-        const response = await fetch(postUrl, {
-          method: 'POST',
-          credentials: 'include',
-          body: formData,
-          redirect: "follow"
-        });
-
-        // ✅ Onboarding mode: backend may redirect (303) to record sale page
-        if (isOnboarding) {
-          if (response.redirected) {
-            window.location.href = response.url;
-            return;
-          }
-          // fallback just in case
-          window.location.href = `${BASE_URL}/sales/recordsale?source=onboarding`;
-          return;
-        }
-
-        // ✅ Normal mode: keep your existing JSON behavior
-        const result = await response.json();
-
-        if (response.ok) {
-          message.style.color = 'green';
-          message.textContent = result.message || "✅ Product added successfully!";
-          document.getElementById('productForm').reset();
-        } else {
-          message.style.color = 'red';
-          message.textContent = result.detail || "❌ Failed to add product.";
-        }
-      } catch (error) {
-        message.style.color = 'red';
-        message.textContent = "⚠️ Error connecting to the server.";
-      }
-    });
-
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/static/service-worker.js")
-        .then(() => console.log("Service Worker registered"))
-        .catch(err => console.error("SW registration failed:", err));
-    }
-  </script>
-
-</body>
-</html>
+{% endblock %}
