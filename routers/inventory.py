@@ -314,6 +314,7 @@ def inventory_overview(
         "index.html",
         {
             "request": request,
+            "current_user": current_user, 
             "total_products": total_products,
             "total_units": total_units,
             "low_stock_products": low_stock_products,
