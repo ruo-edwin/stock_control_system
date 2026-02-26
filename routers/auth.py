@@ -91,6 +91,7 @@ def manage_user_page(
         {
             "request": request,
             "staff_list": staff_list,
+            "current_user": current_user,
             "branches": branches   # 🔥 NEW
         }
     )
@@ -122,6 +123,7 @@ def manage_staff_page(
             "request": request,
             "branches": branches,
             "staff_list": staff_list,
+            "current_user": current_user,
             "selected_branch": branch_id
         }
     )
