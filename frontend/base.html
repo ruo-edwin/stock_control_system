@@ -17,7 +17,7 @@
     --muted: #697386;
 
     --primary: #635bff;
-    --primary-2: #7c3aed; /* optional purple depth */
+    --primary-2: #7c3aed;
     --primary-soft: rgba(99,91,255,0.12);
 
     --danger: #ef4444;
@@ -53,7 +53,7 @@ body {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-bottom: 26px;
+    margin-bottom: 10px;
     padding: 0 8px;
 }
 
@@ -68,8 +68,46 @@ body {
 .brand h2 {
     font-size: 16px;
     margin: 0;
-    letter-spacing: 0.2px;
     font-weight: 600;
+}
+
+/* ===== USER PANEL ===== */
+
+.user-panel {
+    background: rgba(255,255,255,0.05);
+    padding: 12px;
+    border-radius: 12px;
+    margin: 0 8px 20px;
+}
+
+.user-panel small {
+    display: block;
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+.role-badge {
+    display: inline-block;
+    font-size: 11px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-weight: 600;
+    margin-top: 6px;
+}
+
+.role-admin {
+    background: rgba(99,91,255,0.2);
+    color: #c4b5fd;
+}
+
+.role-manager {
+    background: rgba(34,197,94,0.15);
+    color: #86efac;
+}
+
+.role-storekeeper {
+    background: rgba(59,130,246,0.15);
+    color: #93c5fd;
 }
 
 .sidebar-section {
@@ -96,7 +134,7 @@ body {
     padding: 10px 12px;
     border-radius: 10px;
     font-size: 14px;
-    transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease;
+    transition: background 0.2s ease, color 0.2s ease;
 }
 
 .sidebar a:hover {
@@ -104,33 +142,12 @@ body {
     color: white;
 }
 
-/* Premium active state */
 .sidebar a.active {
     background: rgba(99,91,255,0.18);
     color: #ffffff;
     box-shadow: inset 0 0 0 1px rgba(99,91,255,0.25);
 }
 
-/* Left indicator bar */
-.sidebar a.active::before {
-    content: "";
-    position: absolute;
-    left: 6px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 3px;
-    height: 18px;
-    border-radius: 999px;
-    background: linear-gradient(180deg, var(--primary), var(--primary-2));
-    box-shadow: 0 0 18px rgba(99,91,255,0.45);
-}
-
-/* Slight shift for active */
-.sidebar a.active {
-    padding-left: 18px;
-}
-
-/* Push logout to bottom */
 .sidebar-footer {
     margin-top: auto;
     padding-top: 16px;
@@ -147,7 +164,6 @@ body {
     min-height: 100vh;
 }
 
-/* Top header bar */
 .topbar {
     background: white;
     border-bottom: 1px solid var(--border);
@@ -160,14 +176,14 @@ body {
 .topbar h1 {
     font-size: 18px;
     margin: 0;
-    letter-spacing: 0.2px;
 }
 
 .topbar small { color: var(--muted); }
 
 .content { padding: 40px; }
 
-/* Cards */
+/* ===== Utility Cards ===== */
+
 .card {
     background: var(--card);
     border: 1px solid var(--border);
@@ -176,13 +192,20 @@ body {
     box-shadow: 0 1px 2px rgba(0,0,0,0.03);
 }
 
-/* Grid system */
-.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
-.grid-2 { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
-.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+/* ===== Grid System ===== */
 
-/* Tables */
-.table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.grid-2 { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+
+/* ===== Tables ===== */
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
 .table th {
     text-align: left;
     padding: 12px;
@@ -191,9 +214,21 @@ body {
     color: var(--muted);
     border-bottom: 1px solid var(--border);
 }
-.table td { padding: 12px; border-bottom: 1px solid var(--border); }
 
-.badge { padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 500; }
+.table td {
+    padding: 12px;
+    border-bottom: 1px solid var(--border);
+}
+
+/* ===== Badges ===== */
+
+.badge {
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
 .badge-danger { background: #fee2e2; color: var(--danger); }
 .badge-warning { background: #fef3c7; color: var(--warning); }
 .badge-success { background: #dcfce7; color: #16a34a; }
@@ -204,8 +239,8 @@ body {
 
 @media (max-width: 1024px) {
     .grid-4 { grid-template-columns: repeat(2, 1fr); }
-    .grid-2 { grid-template-columns: 1fr; }
     .grid-3 { grid-template-columns: repeat(2, 1fr); }
+    .grid-2 { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 768px) {
@@ -221,11 +256,7 @@ body {
 <body>
 
 {% set path = request.url.path if request else "" %}
-{% set ap = active_page if active_page is defined else "" %}
 
-<!-- =========================
-     SIDEBAR
-========================= -->
 <div class="sidebar">
 
     <div class="brand">
@@ -233,63 +264,89 @@ body {
         <h2>NAIROBIAN HUB</h2>
     </div>
 
+    <!-- USER PANEL -->
+    <div class="user-panel">
+        <small>{{ current_user.username }}</small>
+
+        {% if current_user.role == "admin" %}
+            <span class="role-badge role-admin">ADMIN</span>
+        {% elif current_user.role == "manager" %}
+            <span class="role-badge role-manager">MANAGER</span>
+            {% if current_user.branch %}
+                <small>Branch: {{ current_user.branch.name }}</small>
+            {% endif %}
+        {% elif current_user.role == "storekeeper" %}
+            <span class="role-badge role-storekeeper">STOREKEEPER</span>
+            {% if current_user.branch %}
+                <small>Branch: {{ current_user.branch.name }}</small>
+            {% endif %}
+        {% endif %}
+    </div>
+
+    <!-- OVERVIEW -->
     <div class="sidebar-section">Overview</div>
     <div class="nav">
         <a href="/inventory/dashboard"
-           class="{% if ap=='dashboard' or path.startswith('/inventory/dashboard') %}active{% endif %}">
+           class="{% if path.startswith('/inventory/dashboard') %}active{% endif %}">
            Dashboard
         </a>
     </div>
 
+    <!-- INVENTORY -->
     <div class="sidebar-section">Inventory</div>
     <div class="nav">
+
         <a href="/inventory/products"
-           class="{% if ap=='products' or path.startswith('/inventory/products') %}active{% endif %}">
+           class="{% if path.startswith('/inventory/products') %}active{% endif %}">
            Products
         </a>
 
+        {% if current_user.role in ["admin", "manager"] %}
         <a href="/inventory/add_product"
-           class="{% if ap=='add_product' or path.startswith('/inventory/add_product') %}active{% endif %}">
+           class="{% if path.startswith('/inventory/add_product') %}active{% endif %}">
            Add Product
         </a>
 
-        <a href="/inventory/assign"
-           class="{% if ap=='assign' or path.startswith('/inventory/assign') %}active{% endif %}">
-           Assign Stock
-        </a>
-
         <a href="/inventory/restock"
-           class="{% if ap=='restock' or path.startswith('/inventory/restock') %}active{% endif %}">
+           class="{% if path.startswith('/inventory/restock') %}active{% endif %}">
            Re-stock
         </a>
+        {% endif %}
 
+        {% if current_user.role in ["admin", "storekeeper"] %}
+        <a href="/inventory/assign"
+           class="{% if path.startswith('/inventory/assign') %}active{% endif %}">
+           Assign Stock
+        </a>
+        {% endif %}
     </div>
 
+    <!-- MANAGEMENT (ADMIN ONLY) -->
+    {% if current_user.role == "admin" %}
     <div class="sidebar-section">Management</div>
     <div class="nav">
         <a href="/auth/manage_user"
-           class="{% if ap=='users' or path.startswith('/auth/manage_user') %}active{% endif %}">
+           class="{% if path.startswith('/auth/manage_user') %}active{% endif %}">
            Manage Users
         </a>
 
         <a href="/auth/manage_staff"
-           class="{% if ap=='staff' or path.startswith('/auth/manage_staff') %}active{% endif %}">
+           class="{% if path.startswith('/auth/manage_staff') %}active{% endif %}">
            Manage Staff
         </a>
-         <a href="/inventory/manage_branches"
-           class="{% if ap=='branches' or path.startswith('/inventory/manage_branches') %}active{% endif %}">
+
+        <a href="/inventory/manage_branches"
+           class="{% if path.startswith('/inventory/manage_branches') %}active{% endif %}">
            Manage Branches
         </a>
     </div>
+    {% endif %}
 
     <div class="sidebar-footer">
         <a href="/auth/logout">Logout</a>
     </div>
 </div>
 
-<!-- =========================
-     MAIN AREA
-========================= -->
 <div class="main">
 
     <div class="topbar">
@@ -298,7 +355,7 @@ body {
             <small>Business inventory system</small>
         </div>
         <div>
-            <small>{{ current_user.username if current_user else "" }}</small>
+            <small>{{ current_user.username }}</small>
         </div>
     </div>
 
