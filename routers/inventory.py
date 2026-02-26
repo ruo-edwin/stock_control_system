@@ -29,6 +29,16 @@ def get_product_stock(
     current_user: models.User = Depends(verify_token),
     db: Session = Depends(get_db)
 ):
+
+    # Validate branch belongs to this business
+    branch = db.query(models.Branch).filter(
+        models.Branch.id == branch_id,
+        models.Branch.business_id == current_user.business_id
+    ).first()
+
+    if not branch:
+        return JSONResponse({"stock": 0})
+
     total_stock = db.query(
         func.coalesce(func.sum(models.StockMovement.quantity), 0)
     ).filter(
@@ -37,7 +47,7 @@ def get_product_stock(
         models.StockMovement.branch_id == branch_id
     ).scalar()
 
-    return JSONResponse({"stock": total_stock})
+    return JSONResponse({"stock": int(total_stock or 0)})
 
 # =============================
 # PRODUCTS PAGE (MULTI-BRANCH VIEW)
