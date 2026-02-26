@@ -266,9 +266,9 @@ body {
 
     <!-- USER PANEL -->
     <div class="user-panel">
-        <small>{{ current_user.username }}</small>
-
-        {% if current_user.role == "admin" %}
+       {% set cu = current_user(request) %}
+        <small>{{ cu.username if cu else "" }}</small>
+        {% if cu and cu.role == "admin" %}
             <span class="role-badge role-admin">ADMIN</span>
         {% elif current_user.role == "manager" %}
             <span class="role-badge role-manager">MANAGER</span>
@@ -355,7 +355,8 @@ body {
             <small>Business inventory system</small>
         </div>
         <div>
-            <small>{{ current_user.username }}</small>
+          {% set cu = current_user(request) %}
+           <small>{{ cu.username if cu else "" }}</small>
         </div>
     </div>
 
