@@ -18,28 +18,24 @@ def get_db():
         db.close()
 
 
+
 # =============================
-# PRODUCT STOCK
+# PRODUCT STOCK (BRANCH AWARE)
 # =============================
-@router.get("/product_stock/{product_id}")
+@router.get("/product_stock/{product_id}/{branch_id}")
 def get_product_stock(
     product_id: int,
+    branch_id: int,
     current_user: models.User = Depends(verify_token),
     db: Session = Depends(get_db)
 ):
-    query = db.query(
+    total_stock = db.query(
         func.coalesce(func.sum(models.StockMovement.quantity), 0)
     ).filter(
         models.StockMovement.product_id == product_id,
-        models.StockMovement.business_id == current_user.business_id
-    )
-
-    if current_user.role != "admin":
-        query = query.filter(
-            models.StockMovement.branch_id == current_user.branch_id
-        )
-
-    total_stock = query.scalar()
+        models.StockMovement.business_id == current_user.business_id,
+        models.StockMovement.branch_id == branch_id
+    ).scalar()
 
     return JSONResponse({"stock": total_stock})
 

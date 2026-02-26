@@ -137,8 +137,20 @@ thead {
         <form method="POST" action="/inventory/assign_stock">
 
             <div class="form-group">
+                <label>Select Staff</label>
+                <select name="staff_id" id="staffSelect" required>
+                    <option value="">Select staff</option>
+                    {% for staff in staff_list %}
+                        <option value="{{ staff.id }}" data-branch="{{ staff.branch_id }}">
+                            {{ staff.full_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
                 <label>Select Product</label>
-                <select name="product_id" required>
+                <select name="product_id" id="productSelect" required disabled>
                     <option value="">Select product</option>
                     {% for product in products %}
                         <option value="{{ product.id }}">
@@ -148,20 +160,8 @@ thead {
                 </select>
                <div class="stock-info">
                     Available Stock:
-                    <strong id="stockDisplay">Select product</strong>
+                    <strong id="stockDisplay">Select staff first</strong>
                </div>
-            </div>
-
-            <div class="form-group">
-                <label>Select Staff</label>
-                <select name="staff_id" required>
-                    <option value="">Select staff</option>
-                    {% for staff in staff_list %}
-                        <option value="{{ staff.id }}">
-                            {{ staff.full_name }}
-                        </option>
-                    {% endfor %}
-                </select>
             </div>
 
             <div class="form-group">
@@ -174,7 +174,7 @@ thead {
                 <textarea name="notes" rows="3"></textarea>
             </div>
 
-            <button type="submit">Assign Stock</button>
+            <button type="submit" disabled>Assign Stock</button>
         </form>
     </div>
 
@@ -212,21 +212,45 @@ thead {
     </div>
 
 </div>
+
 <script>
-const productSelect = document.querySelector("select[name='product_id']");
+const staffSelect = document.getElementById("staffSelect");
+const productSelect = document.getElementById("productSelect");
 const stockDisplay = document.getElementById("stockDisplay");
 const assignButton = document.querySelector("button[type='submit']");
+
+let selectedBranchId = null;
+
+// Initially disabled
+productSelect.disabled = true;
+assignButton.disabled = true;
+
+staffSelect.addEventListener("change", function () {
+    const selectedOption = this.options[this.selectedIndex];
+
+    if (!this.value) {
+        selectedBranchId = null;
+        productSelect.disabled = true;
+        assignButton.disabled = true;
+        stockDisplay.innerText = "Select staff first";
+        return;
+    }
+
+    selectedBranchId = selectedOption.getAttribute("data-branch");
+    productSelect.disabled = false;
+    stockDisplay.innerText = "Select product";
+});
 
 productSelect.addEventListener("change", function () {
     const productId = this.value;
 
-    if (!productId) {
-        stockDisplay.innerText = "Select product";
+    if (!productId || !selectedBranchId) {
+        stockDisplay.innerText = "Select staff first";
         assignButton.disabled = true;
         return;
     }
 
-    fetch(`/inventory/product_stock/${productId}`)
+    fetch(`/inventory/product_stock/${productId}/${selectedBranchId}`)
         .then(res => res.json())
         .then(data => {
 
@@ -246,4 +270,5 @@ productSelect.addEventListener("change", function () {
         });
 });
 </script>
+
 {% endblock %}
