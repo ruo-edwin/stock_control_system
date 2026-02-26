@@ -5,233 +5,507 @@
 
 {% block content %}
 
-<div style="display:flex; flex-direction:column; gap:30px;">
+<div class="dash">
 
-    <!-- ===================== -->
-    <!-- SUMMARY CARDS -->
-    <!-- ===================== -->
+  <!-- ===================== -->
+  <!-- HEADER -->
+  <!-- ===================== -->
+  <div class="dash-header">
+    <div class="dash-title">
+      <h1>Inventory Dashboard</h1>
+      <p>Live stock overview across branches — low stock, out of stock, and recent movements.</p>
+    </div>
+  </div>
 
-    <div class="grid-4">
-
-        <div class="card stat-card">
-            <div class="stat-label">Total Products</div>
-            <div class="stat-value">{{ total_products }}</div>
-        </div>
-
-        <div class="card stat-card">
-            <div class="stat-label">Total Units</div>
-            <div class="stat-value">{{ total_units }}</div>
-        </div>
-
-        <div class="card stat-card warning">
-            <div class="stat-label">Low Stock</div>
-            <div class="stat-value">{{ low_stock_products|length }}</div>
-        </div>
-
-        <div class="card stat-card danger">
-            <div class="stat-label">Out of Stock</div>
-            <div class="stat-value">{{ out_of_stock_products|length }}</div>
-        </div>
-
+  <!-- ===================== -->
+  <!-- KPI CARDS -->
+  <!-- ===================== -->
+  <div class="kpis">
+    <div class="kpi-card">
+      <div class="kpi-top">
+        <div class="kpi-chip">Products</div>
+        <div class="kpi-ico kpi-ico-accent">▦</div>
+      </div>
+      <div class="kpi-value">{{ total_products }}</div>
+      <div class="kpi-sub">Total unique items in your catalog</div>
     </div>
 
-    <!-- ===================== -->
-    <!-- MAIN SECTION -->
-    <!-- ===================== -->
-
-    <div class="grid-2">
-
-        <!-- LOW STOCK TABLE -->
-        <div class="card">
-
-            <div class="card-header">
-                <h3>Low Stock Alert</h3>
-            </div>
-
-            {% if low_stock_products %}
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Product</th>
-                        <th>Branch</th>
-                        <th>Stock</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in low_stock_products %}
-                    <tr>
-                        <td>{{ item.name }}</td>
-                        <td>{{ item.branch_name }}</td>
-                        <td>
-                            {% if item.stock == 0 %}
-                                <span class="badge badge-danger">0</span>
-                            {% else %}
-                                <span class="badge badge-warning">{{ item.stock }}</span>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            {% else %}
-                <div class="empty-state">
-                    All products are sufficiently stocked.
-                </div>
-            {% endif %}
-
-        </div>
-
-        <!-- RECENT MOVEMENTS -->
-        <div class="card">
-
-            <div class="card-header">
-                <h3>Recent Stock Movements</h3>
-            </div>
-
-            {% if recent_movements %}
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Product</th>
-                        <th>Type</th>
-                        <th>Qty</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for move in recent_movements %}
-                    <tr>
-                        <td>{{ move.created_at.strftime("%d %b") }}</td>
-                        <td>{{ move.product_name }}</td>
-                        <td>
-                            {% if move.movement_type == "IN" %}
-                                <span class="badge badge-success">IN</span>
-                            {% else %}
-                                <span class="badge">ISSUE</span>
-                            {% endif %}
-                        </td>
-                        <td>{{ move.quantity }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            {% else %}
-                <div class="empty-state">
-                    No recent activity.
-                </div>
-            {% endif %}
-
-        </div>
-
+    <div class="kpi-card">
+      <div class="kpi-top">
+        <div class="kpi-chip">Units</div>
+        <div class="kpi-ico kpi-ico-success">▣</div>
+      </div>
+      <div class="kpi-value">{{ total_units }}</div>
+      <div class="kpi-sub">Total units across all branches</div>
     </div>
 
-    <!-- ===================== -->
-    <!-- BRANCH SUMMARY -->
-    <!-- ===================== -->
+    <div class="kpi-card kpi-warn">
+      <div class="kpi-top">
+        <div class="kpi-chip">Low stock</div>
+        <div class="kpi-ico kpi-ico-warn">!</div>
+      </div>
+      <div class="kpi-value">{{ low_stock_products|length }}</div>
+      <div class="kpi-sub">Products below minimum threshold</div>
+    </div>
+
+    <div class="kpi-card kpi-danger">
+      <div class="kpi-top">
+        <div class="kpi-chip">Out of stock</div>
+        <div class="kpi-ico kpi-ico-danger">×</div>
+      </div>
+      <div class="kpi-value">{{ out_of_stock_products|length }}</div>
+      <div class="kpi-sub">Products with zero stock</div>
+    </div>
+  </div>
+
+  <!-- ===================== -->
+  <!-- MAIN GRID -->
+  <!-- ===================== -->
+  <div class="grid">
+
+    <!-- LOW STOCK -->
+    <div class="panel">
+      <div class="panel-head">
+        <div>
+          <h3>Low Stock Alerts</h3>
+          <p>Focus here to avoid stockouts.</p>
+        </div>
+
+        <div class="panel-tools">
+          <div class="search">
+            <span class="sicon">⌕</span>
+            <input id="lowSearch" type="text" placeholder="Search product..." />
+          </div>
+        </div>
+      </div>
+
+      {% if low_stock_products %}
+      <div class="table-wrap">
+        <table class="table modern" id="lowTable">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Branch</th>
+              <th class="right">Stock</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in low_stock_products %}
+            <tr>
+              <td class="strong">{{ item.name }}</td>
+              <td class="muted">{{ item.branch_name }}</td>
+              <td class="right">
+                {% if item.stock == 0 %}
+                  <span class="badge danger">Out</span>
+                {% else %}
+                  <span class="badge warn">{{ item.stock }}</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+        <div class="empty">
+          <div class="empty-ico">✓</div>
+          <div>
+            <div class="empty-title">All good</div>
+            <div class="empty-sub">All products are sufficiently stocked.</div>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- RECENT MOVEMENTS -->
+    <div class="panel">
+      <div class="panel-head">
+        <div>
+          <h3>Recent Stock Movements</h3>
+          <p>Latest restocks and issues.</p>
+        </div>
+      </div>
+
+      {% if recent_movements %}
+      <div class="table-wrap">
+        <table class="table modern">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Product</th>
+              <th>Type</th>
+              <th class="right">Qty</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for move in recent_movements %}
+            <tr>
+              <td class="muted">{{ move.created_at.strftime("%d %b") }}</td>
+              <td class="strong">{{ move.product_name }}</td>
+              <td>
+                {% if move.movement_type == "IN" %}
+                  <span class="badge success">IN</span>
+                {% else %}
+                  <span class="badge">ISSUE</span>
+                {% endif %}
+              </td>
+              <td class="right">{{ move.quantity }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+        <div class="empty">
+          <div class="empty-ico">—</div>
+          <div>
+            <div class="empty-title">No recent activity</div>
+            <div class="empty-sub">Stock movements will appear here.</div>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+
+  </div>
+
+  <!-- ===================== -->
+  <!-- OUT OF STOCK + BRANCH SUMMARY -->
+  <!-- ===================== -->
+  <div class="bottom-grid">
+
+    <div class="panel">
+      <div class="panel-head">
+        <div>
+          <h3>Out of Stock</h3>
+          <p>Immediate action recommended.</p>
+        </div>
+      </div>
+
+      {% if out_of_stock_products %}
+      <div class="table-wrap">
+        <table class="table modern">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Branch</th>
+              <th class="right">Stock</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in out_of_stock_products %}
+            <tr>
+              <td class="strong">{{ item.name }}</td>
+              <td class="muted">{{ item.branch_name }}</td>
+              <td class="right"><span class="badge danger">0</span></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty">
+        <div class="empty-ico">✓</div>
+        <div>
+          <div class="empty-title">No stockouts</div>
+          <div class="empty-sub">Great — nothing is at zero stock.</div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
 
     {% if branches_summary %}
-    <div class="card">
-
-        <div class="card-header">
-            <h3>Branch Stock Summary</h3>
+    <div class="panel">
+      <div class="panel-head">
+        <div>
+          <h3>Branch Stock Summary</h3>
+          <p>Total units per branch.</p>
         </div>
+      </div>
 
-        <div class="grid-3">
-            {% for branch in branches_summary %}
-            <div class="branch-card">
-                <div class="branch-name">{{ branch.name }}</div>
-                <div class="branch-units">{{ branch.total_units }} units</div>
-            </div>
-            {% endfor %}
+      <div class="branch-grid">
+        {% for branch in branches_summary %}
+        <div class="branch-card">
+          <div class="branch-top">
+            <div class="branch-name">{{ branch.name }}</div>
+            <div class="branch-pill">Units</div>
+          </div>
+          <div class="branch-units">{{ branch.total_units }}</div>
+          <div class="branch-sub">Total units in this branch</div>
         </div>
-
+        {% endfor %}
+      </div>
     </div>
     {% endif %}
+
+  </div>
 
 </div>
 
 
 <style>
+  .dash{ display:flex; flex-direction:column; gap:18px; }
 
-/* ===== SUMMARY CARDS ===== */
+  .dash-title h1{
+    margin:0;
+    font-size:20px;
+    font-weight:700;
+    letter-spacing:-0.02em;
+  }
+  .dash-title p{
+    margin:6px 0 0;
+    color:var(--muted);
+    font-size:13px;
+  }
 
-.stat-card {
-    padding: 28px;
-    border-radius: 16px;
-    background: white;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.stat-card:hover {
+  .kpis{
+    display:grid;
+    grid-template-columns: repeat(4, minmax(0,1fr));
+    gap:12px;
+  }
+  .kpi-card{
+    background:#fff;
+    border-radius:18px;
+    border:1px solid rgba(0,0,0,0.06);
+    padding:16px;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.03);
+    transition: transform .15s ease, box-shadow .2s ease;
+  }
+  .kpi-card:hover{
     transform: translateY(-2px);
-    box-shadow: 0 12px 30px rgba(0,0,0,0.05);
-}
+    box-shadow: 0 12px 26px rgba(0,0,0,0.06);
+  }
+  .kpi-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:10px;
+  }
+  .kpi-chip{
+    font-size:12px;
+    color:var(--muted);
+    background: rgba(99,91,255,0.08);
+    border:1px solid rgba(99,91,255,0.14);
+    padding:6px 10px;
+    border-radius:999px;
+  }
+  .kpi-ico{
+    width:34px;
+    height:34px;
+    border-radius:14px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:800;
+  }
+  .kpi-ico-accent{ background: rgba(99,91,255,0.12); color:#635bff; }
+  .kpi-ico-success{ background: rgba(16,185,129,0.12); color:#10b981; }
+  .kpi-ico-warn{ background: rgba(245,158,11,0.14); color:#f59e0b; }
+  .kpi-ico-danger{ background: rgba(239,68,68,0.12); color:#ef4444; }
 
-.stat-label {
-    font-size: 13px;
-    color: var(--muted);
-    margin-bottom: 8px;
-}
+  .kpi-value{
+    font-size:28px;
+    font-weight:750;
+    letter-spacing:-0.03em;
+  }
+  .kpi-sub{
+    margin-top:6px;
+    font-size:12px;
+    color:var(--muted);
+  }
 
-.stat-value {
-    font-size: 28px;
-    font-weight: 600;
-    letter-spacing: -0.5px;
-}
+  .kpi-warn{ border-left: 4px solid #f59e0b; }
+  .kpi-danger{ border-left: 4px solid #ef4444; }
 
-.stat-card.warning {
-    border-left: 4px solid #f59e0b;
-}
+  .grid{
+    display:grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap:12px;
+  }
+  .bottom-grid{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap:12px;
+  }
 
-.stat-card.danger {
-    border-left: 4px solid #ef4444;
-}
+  .panel{
+    background:#fff;
+    border-radius:18px;
+    border:1px solid rgba(0,0,0,0.06);
+    overflow:hidden;
+  }
 
-/* ===== CARD HEADER ===== */
+  .panel-head{
+    padding:14px 14px 10px;
+    border-bottom:1px solid rgba(0,0,0,0.06);
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:10px;
+  }
+  .panel-head h3{
+    margin:0;
+    font-size:15px;
+    font-weight:700;
+    letter-spacing:-0.01em;
+  }
+  .panel-head p{
+    margin:6px 0 0;
+    font-size:12px;
+    color:var(--muted);
+  }
 
-.card-header {
-    margin-bottom: 20px;
-}
+  .table-wrap{ overflow:auto; }
+  .table.modern{
+    width:100%;
+    border-collapse:separate;
+    border-spacing:0;
+    min-width:520px;
+  }
+  .table.modern thead th{
+    position:sticky;
+    top:0;
+    background:#f8fafc;
+    z-index:1;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:#475569;
+    padding:12px 14px;
+    border-bottom:1px solid rgba(0,0,0,0.06);
+    text-align:left;
+    white-space:nowrap;
+  }
+  .table.modern tbody td{
+    padding:12px 14px;
+    border-bottom:1px solid rgba(0,0,0,0.05);
+    font-size:13px;
+    white-space:nowrap;
+  }
+  .table.modern tbody tr:hover{ background: rgba(99,91,255,0.06); }
+  .right{ text-align:right; }
+  .strong{ font-weight:700; }
+  .muted{ color:var(--muted); }
 
-.card-header h3 {
-    margin: 0;
-    font-size: 16px;
-    font-weight: 600;
-}
+  .badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:6px 10px;
+    border-radius:999px;
+    font-size:12px;
+    font-weight:700;
+    border:1px solid rgba(0,0,0,0.10);
+    background: rgba(2,6,23,0.02);
+  }
+  .badge.success{ border-color: rgba(16,185,129,0.25); background: rgba(16,185,129,0.12); color:#047857; }
+  .badge.warn{ border-color: rgba(245,158,11,0.25); background: rgba(245,158,11,0.14); color:#92400e; }
+  .badge.danger{ border-color: rgba(239,68,68,0.25); background: rgba(239,68,68,0.12); color:#b91c1c; }
 
-/* ===== EMPTY STATE ===== */
+  .empty{
+    padding:18px 14px;
+    display:flex;
+    gap:12px;
+    align-items:center;
+    color:var(--muted);
+  }
+  .empty-ico{
+    width:38px;
+    height:38px;
+    border-radius:14px;
+    background: rgba(99,91,255,0.10);
+    color:#635bff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:900;
+  }
+  .empty-title{ font-weight:750; color:#0f172a; margin-bottom:2px; }
+  .empty-sub{ font-size:12px; }
 
-.empty-state {
-    padding: 30px;
-    text-align: center;
-    color: var(--muted);
-    font-size: 14px;
-}
+  .branch-grid{
+    display:grid;
+    grid-template-columns: repeat(3, minmax(0,1fr));
+    gap:10px;
+    padding:14px;
+  }
+  .branch-card{
+    background:#f8fafc;
+    border:1px solid rgba(0,0,0,0.06);
+    border-radius:16px;
+    padding:14px;
+    transition: background .15s ease, transform .15s ease;
+  }
+  .branch-card:hover{
+    background: rgba(99,91,255,0.08);
+    transform: translateY(-1px);
+  }
+  .branch-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+  }
+  .branch-name{ font-weight:750; letter-spacing:-0.01em; color:#0f172a; }
+  .branch-pill{
+    font-size:11px;
+    font-weight:800;
+    padding:6px 10px;
+    border-radius:999px;
+    background: rgba(99,91,255,0.12);
+    color:#635bff;
+    border:1px solid rgba(99,91,255,0.18);
+  }
+  .branch-units{
+    font-size:22px;
+    font-weight:800;
+    margin-top:10px;
+    letter-spacing:-0.02em;
+  }
+  .branch-sub{ font-size:12px; color:var(--muted); margin-top:4px; }
 
-/* ===== BRANCH CARDS ===== */
+  .panel-tools{ display:flex; align-items:center; gap:10px; }
+  .search{ position:relative; width: min(280px, 60vw); }
+  .search input{
+    width:100%;
+    padding:10px 12px 10px 30px;
+    border-radius:14px;
+    border:1px solid rgba(0,0,0,0.08);
+    background:#fff;
+    outline:none;
+    font-size:13px;
+  }
+  .sicon{
+    position:absolute;
+    left:10px;
+    top:50%;
+    transform: translateY(-50%);
+    opacity:.55;
+    font-weight:900;
+  }
 
-.branch-card {
-    padding: 20px;
-    border-radius: 12px;
-    background: #f8fafc;
-    transition: background 0.2s ease;
-}
-
-.branch-card:hover {
-    background: #eef2ff;
-}
-
-.branch-name {
-    font-size: 14px;
-    color: var(--muted);
-}
-
-.branch-units {
-    font-size: 20px;
-    font-weight: 600;
-    margin-top: 6px;
-}
-
+  @media (max-width: 980px){
+    .kpis{ grid-template-columns: 1fr 1fr; }
+    .grid{ grid-template-columns: 1fr; }
+    .bottom-grid{ grid-template-columns: 1fr; }
+    .branch-grid{ grid-template-columns: 1fr; }
+  }
 </style>
+
+<script>
+  (function(){
+    const input = document.getElementById('lowSearch');
+    const table = document.getElementById('lowTable');
+    if(!input || !table) return;
+
+    const rows = Array.from(table.querySelectorAll('tbody tr'));
+    input.addEventListener('input', () => {
+      const q = (input.value || '').toLowerCase().trim();
+      rows.forEach(r => {
+        const text = (r.innerText || '').toLowerCase();
+        r.style.display = text.includes(q) ? '' : 'none';
+      });
+    });
+  })();
+</script>
 
 {% endblock %}

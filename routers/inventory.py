@@ -157,6 +157,9 @@ def manage_branches(
 # =============================
 # INVENTORY OVERVIEW
 # =============================
+# =============================
+# INVENTORY OVERVIEW
+# =============================
 @router.get("/dashboard", response_class=HTMLResponse)
 def inventory_overview(
     request: Request,
@@ -166,33 +169,151 @@ def inventory_overview(
     if current_user.role not in ["admin", "manager"]:
         raise HTTPException(status_code=403, detail="Not authorized")
 
-    join_condition = (
-        (models.StockMovement.product_id == models.Product.id) &
-        (models.StockMovement.business_id == current_user.business_id)
+    # Scope: admin = all branches, manager = own branch only
+    if current_user.role == "admin":
+        branches = db.query(models.Branch).filter(
+            models.Branch.business_id == current_user.business_id
+        ).all()
+    else:
+        branches = db.query(models.Branch).filter(
+            models.Branch.business_id == current_user.business_id,
+            models.Branch.id == current_user.branch_id
+        ).all()
+
+    branch_ids = [b.id for b in branches]
+
+    # All products for this business
+    products = db.query(models.Product).filter(
+        models.Product.business_id == current_user.business_id
+    ).all()
+
+    total_products = len(products)
+
+    # Stock per product+branch (current stock = sum of movements)
+    stock_rows = db.query(
+        models.StockMovement.product_id,
+        models.StockMovement.branch_id,
+        func.coalesce(func.sum(models.StockMovement.quantity), 0).label("stock")
+    ).filter(
+        models.StockMovement.business_id == current_user.business_id
     )
 
     if current_user.role != "admin":
-        join_condition = join_condition & (
-            models.StockMovement.branch_id == current_user.branch_id
-        )
+        stock_rows = stock_rows.filter(models.StockMovement.branch_id == current_user.branch_id)
 
-    stock_data = db.query(
-        models.Product.id,
-        models.Product.name,
-        func.coalesce(func.sum(models.StockMovement.quantity), 0).label("stock")
-    ).outerjoin(
-        models.StockMovement,
-        join_condition
-    ).filter(
-        models.Product.business_id == current_user.business_id
-    ).group_by(
-        models.Product.id
+    stock_rows = stock_rows.group_by(
+        models.StockMovement.product_id,
+        models.StockMovement.branch_id
     ).all()
+
+    stock_map = {}
+    for r in stock_rows:
+        stock_map.setdefault(r.product_id, {})
+        stock_map[r.product_id][r.branch_id] = int(r.stock or 0)
+
+    # Totals
+    total_units = 0
+    for p in products:
+        for br in branches:
+            qty = stock_map.get(p.id, {}).get(br.id, 0)
+            if qty < 0:
+                qty = 0
+            total_units += qty
+
+    # Low stock / Out of stock lists (per branch)
+    low_stock_products = []
+    out_of_stock_products = []
+
+    for p in products:
+        min_stock = int(getattr(p, "min_stock", 5) or 5)
+        for br in branches:
+            qty = stock_map.get(p.id, {}).get(br.id, 0)
+            if qty < 0:
+                qty = 0
+
+            if qty == 0:
+                out_of_stock_products.append({
+                    "name": p.name,
+                    "branch_name": br.name,
+                    "stock": 0
+                })
+            elif qty <= min_stock:
+                low_stock_products.append({
+                    "name": p.name,
+                    "branch_name": br.name,
+                    "stock": qty
+                })
+
+    # Recent movements (last 10) with product name
+    recent_q = db.query(
+        models.StockMovement.created_at,
+        models.StockMovement.movement_type,
+        models.StockMovement.quantity,
+        models.Product.name.label("product_name")
+    ).join(
+        models.Product,
+        models.Product.id == models.StockMovement.product_id
+    ).filter(
+        models.StockMovement.business_id == current_user.business_id
+    )
+
+    if current_user.role != "admin":
+        recent_q = recent_q.filter(models.StockMovement.branch_id == current_user.branch_id)
+
+    recent_movements = recent_q.order_by(
+        models.StockMovement.created_at.desc()
+    ).limit(10).all()
+
+    # Branch summary (units per branch)
+    branches_summary = []
+    if branches:
+        branch_sums = db.query(
+            models.StockMovement.branch_id,
+            func.coalesce(func.sum(models.StockMovement.quantity), 0).label("total_units")
+        ).filter(
+            models.StockMovement.business_id == current_user.business_id,
+            models.StockMovement.branch_id.in_(branch_ids)
+        ).group_by(
+            models.StockMovement.branch_id
+        ).all()
+
+        sums_map = {int(x.branch_id): int(x.total_units or 0) for x in branch_sums}
+
+        for br in branches:
+            units = sums_map.get(br.id, 0)
+            if units < 0:
+                units = 0
+            branches_summary.append({
+                "name": br.name,
+                "total_units": units
+            })
+
+    # (Optional) stock_data for anything else in your dashboard
+    # Here we keep it as product totals across the visible branches
+    stock_data = []
+    for p in products:
+        total = 0
+        for br in branches:
+            q = stock_map.get(p.id, {}).get(br.id, 0)
+            if q < 0:
+                q = 0
+            total += q
+        stock_data.append({
+            "id": p.id,
+            "name": p.name,
+            "stock": total
+        })
 
     return templates.TemplateResponse(
         "index.html",
         {
             "request": request,
+            "total_products": total_products,
+            "total_units": total_units,
+            "low_stock_products": low_stock_products,
+            "out_of_stock_products": out_of_stock_products,
+            "recent_movements": recent_movements,
+            "branches_summary": branches_summary,
             "stock_data": stock_data
         }
     )
