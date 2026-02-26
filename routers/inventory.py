@@ -112,6 +112,7 @@ def products_page(
         {
             "request": request,
             "products": product_data,
+            "current_user": current_user,
             "branches": branches
         }
     )
@@ -129,7 +130,7 @@ def add_product_page(
 
     return templates.TemplateResponse(
         "add_product.html",
-        {"request": request, "success": success}
+        {"request": request, "success": success,"current_user": current_user}
     )
 
 
@@ -155,6 +156,7 @@ def manage_branches(
         {
             "request": request,
             "branches": branches,
+            "current_user": current_user,
             "success": success
         }
     )
@@ -375,6 +377,7 @@ def assign_page(
             "request": request,
             "products": products,
             "staff_list": staff_list,
+            "current_user": current_user,
             "movements": movements,
             "success": success
         }
