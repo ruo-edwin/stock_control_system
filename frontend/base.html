@@ -311,7 +311,7 @@ html{
         {% if current_user.role in ["admin", "manager"] %}
         <a href="/inventory/add_product"
            class="{% if path.startswith('/inventory/add_product') %}active{% endif %}">
-           Add Product
+           Add Products
         </a>
 
         <a href="/inventory/restock"
