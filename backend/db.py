@@ -15,7 +15,7 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
     raise ValueError("DATABASE_URL environment variable is missing or not set.")
 
-print("DATABASE_URL LOADED:", DATABASE_URL)
+print("DATABASE_URL loaded successfully")
 
 # -------------------------------------------------
 # Ensure correct MySQL driver format (safe conversion)

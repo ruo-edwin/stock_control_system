@@ -35,7 +35,7 @@ def get_db():
 # SUPERADMIN AUTH CHECK
 # ----------------------------------------------------
 def require_superadmin(request: Request, db: Session):
-    token_data = verify_token(request)
+    token_data = verify_token(request, db)
     if not token_data:
         raise HTTPException(status_code=401, detail="Unauthorized")
 
