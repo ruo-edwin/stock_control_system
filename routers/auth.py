@@ -1,23 +1,34 @@
+
 from fastapi import APIRouter, Depends, HTTPException, Form, Request
 from fastapi.responses import RedirectResponse, JSONResponse, HTMLResponse
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
-from jose import JWTError, jwt
 from datetime import datetime, timedelta
+
 from backend import models
 from backend.db import SessionLocal
 from backend.auth_utils import (
     create_access_token,
     ACCESS_TOKEN_EXPIRE_MINUTES,
-    SECRET_KEY,
-    ALGORITHM,
-    verify_token
+    get_current_user,
 )
 from backend.config import templates
 
-router = APIRouter(prefix="/auth", tags=["authentication"])
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+router = APIRouter(
+    prefix="/auth",
+    tags=["authentication"]
+)
+
+pwd_context = CryptContext(
+    schemes=["bcrypt"],
+    deprecated="auto"
+)
+
+
+# ----------------------------------------------------
+# DB DEPENDENCY
+# ----------------------------------------------------
 
 def get_db():
     db = SessionLocal()
@@ -27,19 +38,27 @@ def get_db():
         db.close()
 
 
-# ✅ Dashboard redirect
+# ----------------------------------------------------
+# DASHBOARD
+# ----------------------------------------------------
+
 @router.get("/dashboard")
 def get_dashboard(
     request: Request,
-    current_user: models.User = Depends(verify_token),
+    current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     business_name = "Superadmin"
 
     if current_user.business_id:
-        biz = db.query(models.Business).filter(
-            models.Business.id == current_user.business_id
-        ).first()
+        biz = (
+            db.query(models.Business)
+            .filter(
+                models.Business.id == current_user.business_id
+            )
+            .first()
+        )
+
         if biz:
             business_name = biz.business_name
 
@@ -51,40 +70,70 @@ def get_dashboard(
             "business_name": business_name,
             "last_login": current_user.last_login,
             "role": current_user.role,
-        },
+        }
     )
 
-# ✅ Registration page
+
+# ----------------------------------------------------
+# REGISTRATION PAGE
+# ----------------------------------------------------
+
 @router.get("/register", response_class=HTMLResponse)
 async def register_page(request: Request):
-    return templates.TemplateResponse("register_form.html", {"request": request})
+    return templates.TemplateResponse(
+        "register_form.html",
+        {"request": request}
+    )
 
 
-# ✅ Login page
+# ----------------------------------------------------
+# LOGIN PAGE
+# ----------------------------------------------------
+
 @router.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request})
+    return templates.TemplateResponse(
+        "login.html",
+        {"request": request}
+    )
 
-# ✅ manage user page
+
+# ----------------------------------------------------
+# MANAGE USERS PAGE
+# ADMIN ONLY
+# ----------------------------------------------------
+
 @router.get("/manage_user", response_class=HTMLResponse)
 def manage_user_page(
     request: Request,
-    current_user: models.User = Depends(verify_token),
+    current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    # ADMIN ONLY
     if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Access denied")
+        raise HTTPException(
+            status_code=403,
+            detail="Access denied"
+        )
 
     business_id = current_user.business_id
 
-    staff_list = db.query(models.User).filter(
-        models.User.business_id == business_id,
-        models.User.role.in_(["manager", "storekeeper"])
-    ).all()
+    staff_list = (
+        db.query(models.User)
+        .filter(
+            models.User.business_id == business_id,
+            models.User.role.in_(["manager", "storekeeper"])
+        )
+        .all()
+    )
 
-    branches = db.query(models.Branch).filter(
-        models.Branch.business_id == business_id
-    ).all()
+    branches = (
+        db.query(models.Branch)
+        .filter(
+            models.Branch.business_id == business_id
+        )
+        .all()
+    )
 
     return templates.TemplateResponse(
         "manage_user.html",
@@ -92,30 +141,49 @@ def manage_user_page(
             "request": request,
             "staff_list": staff_list,
             "current_user": current_user,
-            "branches": branches   # 🔥 NEW
+            "branches": branches
         }
     )
+
+
+# ----------------------------------------------------
+# MANAGE STAFF PAGE
+# ADMIN ONLY
+# ----------------------------------------------------
+
 @router.get("/manage_staff", response_class=HTMLResponse)
 def manage_staff_page(
     request: Request,
     branch_id: int = None,
-    current_user: models.User = Depends(verify_token),
+    current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    # ADMIN ONLY
     if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Access denied")
+        raise HTTPException(
+            status_code=403,
+            detail="Access denied"
+        )
 
-    branches = db.query(models.Branch).filter(
-        models.Branch.business_id == current_user.business_id
-    ).all()
+    branches = (
+        db.query(models.Branch)
+        .filter(
+            models.Branch.business_id == current_user.business_id
+        )
+        .all()
+    )
 
     staff_list = []
 
     if branch_id:
-        staff_list = db.query(models.Staff).filter(
-            models.Staff.branch_id == branch_id,
-            models.Staff.business_id == current_user.business_id
-        ).all()
+        staff_list = (
+            db.query(models.Staff)
+            .filter(
+                models.Staff.branch_id == branch_id,
+                models.Staff.business_id == current_user.business_id
+            )
+            .all()
+        )
 
     return templates.TemplateResponse(
         "manage_staff.html",
@@ -127,7 +195,17 @@ def manage_staff_page(
             "selected_branch": branch_id
         }
     )
-# ✅ Register: Business + Admin + Subscription + AUTO LOGIN
+
+
+# ----------------------------------------------------
+# REGISTER BUSINESS
+# CREATES:
+# - BUSINESS
+# - ADMIN USER
+# - 7-DAY TRIAL SUBSCRIPTION
+# - AUTO LOGIN
+# ----------------------------------------------------
+
 @router.post("/register_form")
 def register_business(
     business_name: str = Form(...),
@@ -140,13 +218,46 @@ def register_business(
     try:
         clean_password = password.strip()
 
-        if db.query(models.Business).filter(models.Business.email == email).first():
-            raise HTTPException(status_code=400, detail="Email already registered")
+        # -----------------------------
+        # VALIDATE EMAIL
+        # -----------------------------
 
-        if db.query(models.User).filter(models.User.username == username).first():
-            raise HTTPException(status_code=400, detail="Username already taken")
+        existing_business = (
+            db.query(models.Business)
+            .filter(
+                models.Business.email == email
+            )
+            .first()
+        )
 
-        # Create business
+        if existing_business:
+            raise HTTPException(
+                status_code=400,
+                detail="Email already registered"
+            )
+
+        # -----------------------------
+        # VALIDATE USERNAME
+        # -----------------------------
+
+        existing_user = (
+            db.query(models.User)
+            .filter(
+                models.User.username == username
+            )
+            .first()
+        )
+
+        if existing_user:
+            raise HTTPException(
+                status_code=400,
+                detail="Username already taken"
+            )
+
+        # -----------------------------
+        # CREATE BUSINESS
+        # -----------------------------
+
         new_business = models.Business(
             business_name=business_name,
             username=username,
@@ -154,14 +265,20 @@ def register_business(
             phone=phone,
             password_hash=pwd_context.hash(clean_password)
         )
+
         db.add(new_business)
         db.commit()
         db.refresh(new_business)
 
+        # Generate business code
         new_business.business_code = f"RP{new_business.id}"
+
         db.commit()
 
-        # Create admin user
+        # -----------------------------
+        # CREATE ADMIN USER
+        # -----------------------------
+
         admin_user = models.User(
             business_id=new_business.id,
             username=username,
@@ -170,26 +287,35 @@ def register_business(
             is_active=1,
             last_login=datetime.utcnow()
         )
+
         db.add(admin_user)
         db.commit()
         db.refresh(admin_user)
 
-        # Create trial subscription
-        trial_end = datetime.utcnow() + timedelta(days=7)
+        # -----------------------------
+        # CREATE TRIAL SUBSCRIPTION
+        # -----------------------------
+
+        now = datetime.utcnow()
+        trial_end = now + timedelta(days=7)
+
         new_subscription = models.Subscription(
             business_id=new_business.id,
             status="trial",
-            start_date=datetime.utcnow(),
+            start_date=now,
             end_date=trial_end,
             is_active=True,
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow()
+            created_at=now,
+            updated_at=now
         )
+
         db.add(new_subscription)
         db.commit()
 
-        # AUTO LOGIN TOKEN
-        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        # -----------------------------
+        # AUTO LOGIN
+        # -----------------------------
+
         access_token = create_access_token(
             data={
                 "user_id": admin_user.id,
@@ -197,13 +323,17 @@ def register_business(
                 "business_id": admin_user.business_id,
                 "role": admin_user.role
             },
-            expires_delta=access_token_expires
+            expires_delta=timedelta(
+                minutes=ACCESS_TOKEN_EXPIRE_MINUTES
+            )
         )
 
-        response = JSONResponse(content={
-            "message": "✅ Account created successfully! Redirecting to dashboard...",
-            "redirect": "/inventory/dashboard"
-        })
+        response = JSONResponse(
+            content={
+                "message": "✅ Account created successfully! Redirecting to dashboard...",
+                "redirect": "/inventory/dashboard"
+            }
+        )
 
         response.set_cookie(
             key="access_token",
@@ -216,27 +346,73 @@ def register_business(
 
         return response
 
+    except HTTPException:
+        db.rollback()
+        raise
+
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(
+            status_code=500,
+            detail=f"Registration failed: {str(e)}"
+        )
 
 
-# ✅ Login + Subscription Validation + SUPERADMIN BYPASS
+# ----------------------------------------------------
+# LOGIN
+# SUBSCRIPTION VALIDATION
+# SUPERADMIN BYPASS
+# ----------------------------------------------------
+
 @router.post("/login_form")
-def login_user(username: str = Form(...), password: str = Form(...), db: Session = Depends(get_db)):
+def login_user(
+    username: str = Form(...),
+    password: str = Form(...),
+    db: Session = Depends(get_db)
+):
     try:
-        user = db.query(models.User).filter(models.User.username == username).first()
+        # -----------------------------
+        # FIND USER
+        # -----------------------------
 
-        if not user or not pwd_context.verify(password, user.password_hash):
-            raise HTTPException(status_code=400, detail="Invalid username or password")
+        user = (
+            db.query(models.User)
+            .filter(
+                models.User.username == username
+            )
+            .first()
+        )
 
+        if not user:
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid username or password"
+            )
+
+        # -----------------------------
+        # VERIFY PASSWORD
+        # -----------------------------
+
+        if not pwd_context.verify(
+            password,
+            user.password_hash
+        ):
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid username or password"
+            )
+
+        # -----------------------------
         # SUPERADMIN BYPASS
+        # -----------------------------
+
         if user.role == "superadmin":
+
             user.is_active = 1
             user.last_login = datetime.utcnow()
+
             db.commit()
 
-            access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
             access_token = create_access_token(
                 data={
                     "user_id": user.id,
@@ -244,10 +420,16 @@ def login_user(username: str = Form(...), password: str = Form(...), db: Session
                     "business_id": user.business_id,
                     "role": user.role
                 },
-                expires_delta=access_token_expires
+                expires_delta=timedelta(
+                    minutes=ACCESS_TOKEN_EXPIRE_MINUTES
+                )
             )
 
-            response = RedirectResponse(url="/superadmin/admin_panel", status_code=302)
+            response = RedirectResponse(
+                url="/superadmin/admin_panel",
+                status_code=302
+            )
+
             response.set_cookie(
                 key="access_token",
                 value=access_token,
@@ -256,37 +438,86 @@ def login_user(username: str = Form(...), password: str = Form(...), db: Session
                 samesite="lax",
                 max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60
             )
+
             return response
 
-        subscription = db.query(models.Subscription).filter(
-            models.Subscription.business_id == user.business_id
-        ).first()
+        # -----------------------------
+        # GET SUBSCRIPTION
+        # -----------------------------
+
+        subscription = (
+            db.query(models.Subscription)
+            .filter(
+                models.Subscription.business_id == user.business_id
+            )
+            .first()
+        )
 
         if not subscription:
-            raise HTTPException(status_code=400, detail="Subscription record missing. Contact support.")
+            raise HTTPException(
+                status_code=400,
+                detail="Subscription record missing. Contact support."
+            )
 
         now = datetime.utcnow()
 
+        # -----------------------------
+        # SUSPENDED
+        # -----------------------------
+
         if subscription.status == "suspended":
-            raise HTTPException(status_code=403, detail="Your account is suspended.")
+            raise HTTPException(
+                status_code=403,
+                detail="Your account is suspended."
+            )
 
-        if subscription.status == "trial" and subscription.end_date < now:
+        # -----------------------------
+        # EXPIRED TRIAL
+        # -----------------------------
+
+        if (
+            subscription.status == "trial"
+            and subscription.end_date
+            and subscription.end_date < now
+        ):
             subscription.status = "expired"
             subscription.is_active = False
-            db.commit()
-            raise HTTPException(status_code=403, detail="Your trial has expired.")
 
-        if subscription.status == "active" and subscription.end_date < now:
+            db.commit()
+
+            raise HTTPException(
+                status_code=403,
+                detail="Your trial has expired."
+            )
+
+        # -----------------------------
+        # EXPIRED ACTIVE SUBSCRIPTION
+        # -----------------------------
+
+        if (
+            subscription.status == "active"
+            and subscription.end_date
+            and subscription.end_date < now
+        ):
             subscription.status = "expired"
             subscription.is_active = False
+
             db.commit()
-            raise HTTPException(status_code=403, detail="Your subscription has expired.")
+
+            raise HTTPException(
+                status_code=403,
+                detail="Your subscription has expired."
+            )
+
+        # -----------------------------
+        # LOGIN SUCCESS
+        # -----------------------------
 
         user.is_active = 1
         user.last_login = datetime.utcnow()
+
         db.commit()
 
-        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = create_access_token(
             data={
                 "user_id": user.id,
@@ -294,12 +525,15 @@ def login_user(username: str = Form(...), password: str = Form(...), db: Session
                 "business_id": user.business_id,
                 "role": user.role
             },
-            expires_delta=access_token_expires
+            expires_delta=timedelta(
+                minutes=ACCESS_TOKEN_EXPIRE_MINUTES
+            )
         )
 
-        redirect_url = "/auth/dashboard"
-
-        response = RedirectResponse(url=redirect_url, status_code=302)
+        response = RedirectResponse(
+            url="/auth/dashboard",
+            status_code=302
+        )
 
         response.set_cookie(
             key="access_token",
@@ -309,50 +543,107 @@ def login_user(username: str = Form(...), password: str = Form(...), db: Session
             samesite="lax",
             max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60
         )
+
         return response
+
+    except HTTPException:
+        db.rollback()
+        raise
 
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(
+            status_code=500,
+            detail=f"Login failed: {str(e)}"
+        )
+
+
+# ----------------------------------------------------
+# CREATE USER
+# ADMIN ONLY
+#
+# Can create:
+# - manager
+# - storekeeper
+# ----------------------------------------------------
+
 @router.post("/create_user")
 def create_user_member(
     username: str = Form(...),
     password: str = Form(...),
     role: str = Form(...),
-    branch_id: int = Form(...),  # 🔥 required now
-    current_user: models.User = Depends(verify_token),
+    branch_id: int = Form(...),
+    current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    # 🔒 Admin only
+    # -----------------------------
+    # ADMIN ONLY
+    # -----------------------------
+
     if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Access denied")
+        raise HTTPException(
+            status_code=403,
+            detail="Access denied"
+        )
 
-    # ✅ Only allow manager or storekeeper
+    # -----------------------------
+    # ALLOWED ROLES
+    # -----------------------------
+
     if role not in ["manager", "storekeeper"]:
-        raise HTTPException(status_code=400, detail="Invalid role selected")
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid role selected"
+        )
 
-    # 🔎 Validate branch exists and belongs to this business
-    branch = db.query(models.Branch).filter(
-        models.Branch.id == branch_id,
-        models.Branch.business_id == current_user.business_id
-    ).first()
+    # -----------------------------
+    # CHECK BRANCH
+    # -----------------------------
+
+    branch = (
+        db.query(models.Branch)
+        .filter(
+            models.Branch.id == branch_id,
+            models.Branch.business_id == current_user.business_id
+        )
+        .first()
+    )
 
     if not branch:
-        raise HTTPException(status_code=400, detail="Invalid branch selected")
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid branch selected"
+        )
 
-    # 🚫 Prevent duplicate username
-    existing = db.query(models.User).filter(
-        models.User.username == username
-    ).first()
+    # -----------------------------
+    # CHECK DUPLICATE USERNAME
+    # -----------------------------
+
+    existing = (
+        db.query(models.User)
+        .filter(
+            models.User.username == username
+        )
+        .first()
+    )
 
     if existing:
-        raise HTTPException(status_code=400, detail="Username already exists")
+        raise HTTPException(
+            status_code=400,
+            detail="Username already exists"
+        )
+
+    # -----------------------------
+    # CREATE USER
+    # -----------------------------
 
     new_user = models.User(
         business_id=current_user.business_id,
-        branch_id=branch_id,  # 🔥 critical
+        branch_id=branch_id,
         username=username,
-        password_hash=pwd_context.hash(password.strip()),
+        password_hash=pwd_context.hash(
+            password.strip()
+        ),
         role=role,
         is_active=1
     )
@@ -365,23 +656,51 @@ def create_user_member(
         status_code=303
     )
 
+
+# ----------------------------------------------------
+# CREATE STAFF
+# ADMIN ONLY
+# ----------------------------------------------------
+
 @router.post("/create_staff")
 def create_staff_member(
     full_name: str = Form(...),
     branch_id: int = Form(...),
-    current_user: models.User = Depends(verify_token),
+    current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Access denied")
+    # -----------------------------
+    # ADMIN ONLY
+    # -----------------------------
 
-    branch = db.query(models.Branch).filter(
-        models.Branch.id == branch_id,
-        models.Branch.business_id == current_user.business_id
-    ).first()
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Access denied"
+        )
+
+    # -----------------------------
+    # CHECK BRANCH
+    # -----------------------------
+
+    branch = (
+        db.query(models.Branch)
+        .filter(
+            models.Branch.id == branch_id,
+            models.Branch.business_id == current_user.business_id
+        )
+        .first()
+    )
 
     if not branch:
-        raise HTTPException(status_code=400, detail="Invalid branch")
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid branch"
+        )
+
+    # -----------------------------
+    # CREATE STAFF
+    # -----------------------------
 
     new_staff = models.Staff(
         business_id=current_user.business_id,
@@ -397,9 +716,21 @@ def create_staff_member(
         url=f"/auth/manage_staff?branch_id={branch_id}",
         status_code=303
     )
-# ✅ Logout
+
+
+# ----------------------------------------------------
+# LOGOUT
+# ----------------------------------------------------
+
 @router.get("/logout")
 def logout_user():
-    response = RedirectResponse(url="/auth/login")
-    response.delete_cookie("access_token")
+    response = RedirectResponse(
+        url="/auth/login"
+    )
+
+    response.delete_cookie(
+        "access_token"
+    )
+
     return response
+
