@@ -297,7 +297,7 @@ def login_user(username: str = Form(...), password: str = Form(...), db: Session
             expires_delta=access_token_expires
         )
 
-        redirect_url = "/inventory/dashboard"
+        redirect_url = "/auth/dashboard"
 
         response = RedirectResponse(url=redirect_url, status_code=302)
 
