@@ -18,14 +18,19 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 # ✅ HTTPS redirect middleware
+# ✅ HTTPS redirect only in production
+import os
+
 @app.middleware("http")
 async def enforce_https(request: Request, call_next):
-    proto = request.headers.get("x-forwarded-proto", "http")
-    if proto == "http":
-        https_url = request.url.replace(scheme="https")
-        return RedirectResponse(url=str(https_url))
-    return await call_next(request)
+    if os.getenv("ENVIRONMENT") == "production":
+        proto = request.headers.get("x-forwarded-proto", "http")
 
+        if proto == "http":
+            https_url = request.url.replace(scheme="https")
+            return RedirectResponse(url=str(https_url))
+
+    return await call_next(request)
 
 # ✅ JWT auth middleware + (OPTION A) Attach current_user to request automatically
 @app.middleware("http")
