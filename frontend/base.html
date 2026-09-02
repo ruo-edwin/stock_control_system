@@ -502,41 +502,6 @@
         </div>
 
 
-        <!-- =====================================================
-             SALES
-        ====================================================== -->
-
-        <div class="sidebar-section">
-            Sales
-        </div>
-
-        <div class="nav">
-
-            {% if cu and cu.role in ["admin", "manager", "storekeeper"] %}
-
-                <a
-                    href="/sales/recordsale"
-                    class="{% if path.startswith('/sales/recordsale') %}active{% endif %}"
-                >
-                    Record Sale
-                </a>
-
-            {% endif %}
-
-
-            {% if cu and cu.role == "admin" %}
-
-                <a
-                    href="/sales/salesreport"
-                    class="{% if path.startswith('/sales/salesreport') %}active{% endif %}"
-                >
-                    Sales Report
-                </a>
-
-            {% endif %}
-
-        </div>
-
 
         <!-- =====================================================
              MANAGEMENT
