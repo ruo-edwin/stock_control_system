@@ -532,7 +532,7 @@ def login_user(
         )
 
         response = RedirectResponse(
-            url="/auth/dashboard",
+            url="/inventory/dashboard",
             status_code=302
         )
 
