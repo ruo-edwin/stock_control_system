@@ -338,7 +338,7 @@ def inventory_overview(
     db: Session = Depends(get_db)
 ):
 
-    if current_user.role not in ["admin", "manager"]:
+    if current_user.role not in ["admin", "manager", "storekeeper"]:
         raise HTTPException(
             status_code=403,
             detail="Not authorized"
