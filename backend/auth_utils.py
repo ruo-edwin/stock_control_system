@@ -33,7 +33,7 @@ def blacklist_token(token: str):
     token_blacklist.add(token)
 
 
-def verify_token(request: Request, db: Session):
+def verify_token(request: Request, db: Session = Depends(get_db)):
     token = request.cookies.get("access_token")
 
     if not token or token in token_blacklist:
