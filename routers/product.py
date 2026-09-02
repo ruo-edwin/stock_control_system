@@ -1,4 +1,4 @@
-```python
+
 from fastapi import APIRouter, Depends, HTTPException, Form, Body, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
@@ -184,4 +184,4 @@ def update_stock(
         "message": "✅ Product updated successfully",
         "product": product.name
     }
-```
+
