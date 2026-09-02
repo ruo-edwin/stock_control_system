@@ -425,26 +425,14 @@
 
         <div class="nav">
 
-            {% if cu and cu.role in ["admin", "manager"] %}
-
+            {% if cu and cu.role in ["admin", "manager", "storekeeper"] %}
                 <a
                     href="/inventory/dashboard"
                     class="{% if path.startswith('/inventory/dashboard') %}active{% endif %}"
                 >
                     Dashboard
                 </a>
-
-            {% elif cu and cu.role == "storekeeper" %}
-
-                <a
-                    href="/auth/dashboard"
-                    class="{% if path.startswith('/auth/dashboard') %}active{% endif %}"
-                >
-                    Dashboard
-                </a>
-
             {% endif %}
-
         </div>
 
 
