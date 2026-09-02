@@ -1,377 +1,643 @@
+
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{% block title %}NAIROBIAN HUB{% endblock %}</title>
 
-<link href="https://rsms.me/inter/inter.css" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<style>
-:root {
-    --bg: #f6f9fc;
-    --sidebar: #0f172a;
-    --card: #ffffff;
-    --border: #e6ebf1;
-    --text: #1a1f36;
-    --muted: #697386;
+    <title>
+        {% block title %}NAIROBIAN HUB{% endblock %}
+    </title>
 
-    --primary: #635bff;
-    --primary-2: #7c3aed;
-    --primary-soft: rgba(99,91,255,0.12);
+    <link
+        href="https://rsms.me/inter/inter.css"
+        rel="stylesheet"
+    >
 
-    --danger: #ef4444;
-    --warning: #f59e0b;
-}
+    <style>
 
-* { box-sizing: border-box; }
+        :root {
+            --bg: #f6f9fc;
+            --sidebar: #0f172a;
+            --card: #ffffff;
+            --border: #e6ebf1;
+            --text: #1a1f36;
+            --muted: #697386;
+            --primary: #635bff;
+            --primary-2: #7c3aed;
+            --primary-soft: rgba(99,91,255,0.12);
+            --danger: #ef4444;
+            --warning: #f59e0b;
+        }
 
-body {
-    margin: 0;
-    font-family: 'Inter', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    display: flex;
-}
+        * {
+            box-sizing: border-box;
+        }
 
-html{
-    scroll-behavior: smooth;
-}
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+        }
 
-/* =========================
-   SIDEBAR
-========================= */
+        html {
+            scroll-behavior: smooth;
+        }
 
-.sidebar {
-    width: 260px;
-    background: var(--sidebar);
-    color: white;
-    height: 100vh;
-    padding: 26px 16px;
-    position: fixed;
-    display: flex;
-    flex-direction: column;
+        /* =========================
+           SIDEBAR
+        ========================= */
 
-    overflow-y: auto; 
+        .sidebar {
+            width: 260px;
+            background: var(--sidebar);
+            color: white;
+            height: 100vh;
+            padding: 26px 16px;
+            position: fixed;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
 
-}
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            padding: 0 8px;
+        }
 
-.brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 10px;
-    padding: 0 8px;
-}
+        .brand-badge {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            background: linear-gradient(
+                135deg,
+                var(--primary),
+                var(--primary-2)
+            );
+            box-shadow: 0 8px 20px rgba(99,91,255,0.25);
+        }
 
-.brand-badge {
-    width: 34px;
-    height: 34px;
-    border-radius: 10px;
-    background: linear-gradient(135deg, var(--primary), var(--primary-2));
-    box-shadow: 0 8px 20px rgba(99,91,255,0.25);
-}
+        .brand h2 {
+            font-size: 16px;
+            margin: 0;
+            font-weight: 600;
+        }
 
-.brand h2 {
-    font-size: 16px;
-    margin: 0;
-    font-weight: 600;
-}
+        /* =========================
+           USER PANEL
+        ========================= */
 
-/* ===== USER PANEL ===== */
+        .user-panel {
+            background: rgba(255,255,255,0.05);
+            padding: 12px;
+            border-radius: 12px;
+            margin: 0 8px 20px;
+        }
 
-.user-panel {
-    background: rgba(255,255,255,0.05);
-    padding: 12px;
-    border-radius: 12px;
-    margin: 0 8px 20px;
-}
+        .user-panel small {
+            display: block;
+            font-size: 12px;
+            color: #94a3b8;
+        }
 
-.user-panel small {
-    display: block;
-    font-size: 12px;
-    color: #94a3b8;
-}
+        .role-badge {
+            display: inline-block;
+            font-size: 11px;
+            padding: 4px 8px;
+            border-radius: 999px;
+            font-weight: 600;
+            margin-top: 6px;
+        }
 
-.role-badge {
-    display: inline-block;
-    font-size: 11px;
-    padding: 4px 8px;
-    border-radius: 999px;
-    font-weight: 600;
-    margin-top: 6px;
-}
+        .role-admin {
+            background: rgba(99,91,255,0.2);
+            color: #c4b5fd;
+        }
 
-.role-admin {
-    background: rgba(99,91,255,0.2);
-    color: #c4b5fd;
-}
+        .role-manager {
+            background: rgba(34,197,94,0.15);
+            color: #86efac;
+        }
 
-.role-manager {
-    background: rgba(34,197,94,0.15);
-    color: #86efac;
-}
+        .role-storekeeper {
+            background: rgba(59,130,246,0.15);
+            color: #93c5fd;
+        }
 
-.role-storekeeper {
-    background: rgba(59,130,246,0.15);
-    color: #93c5fd;
-}
+        .sidebar-section {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #64748b;
+            margin: 18px 10px 8px;
+            letter-spacing: 0.8px;
+        }
 
-.sidebar-section {
-    font-size: 11px;
-    text-transform: uppercase;
-    color: #64748b;
-    margin: 18px 10px 8px;
-    letter-spacing: 0.8px;
-}
+        .nav {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
 
-.nav {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
+        .sidebar a {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #cbd5e1;
+            text-decoration: none;
+            padding: 10px 12px;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: background 0.2s ease, color 0.2s ease;
+        }
 
-.sidebar a {
-    position: relative;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    color: #cbd5e1;
-    text-decoration: none;
-    padding: 10px 12px;
-    border-radius: 10px;
-    font-size: 14px;
-    transition: background 0.2s ease, color 0.2s ease;
-}
+        .sidebar a:hover {
+            background: rgba(255,255,255,0.05);
+            color: white;
+        }
 
-.sidebar a:hover {
-    background: rgba(255,255,255,0.05);
-    color: white;
-}
+        .sidebar a.active {
+            background: rgba(99,91,255,0.18);
+            color: #ffffff;
+            box-shadow: inset 0 0 0 1px rgba(99,91,255,0.25);
+        }
 
-.sidebar a.active {
-    background: rgba(99,91,255,0.18);
-    color: #ffffff;
-    box-shadow: inset 0 0 0 1px rgba(99,91,255,0.25);
-}
+        .sidebar-footer {
+            margin-top: auto;
+            padding-top: 16px;
+            border-top: 1px solid rgba(255,255,255,0.08);
+        }
 
-.sidebar-footer {
-    margin-top: auto;
-    padding-top: 16px;
-    border-top: 1px solid rgba(255,255,255,0.08);
-}
+        /* =========================
+           MAIN CONTENT
+        ========================= */
 
-/* =========================
-   MAIN CONTENT
-========================= */
+        .main {
+            margin-left: 260px;
+            width: 100%;
+            min-height: 100vh;
+        }
 
-.main {
-    margin-left: 260px;
-    width: 100%;
-    min-height: 100vh;
-}
+        .topbar {
+            background: white;
+            border-bottom: 1px solid var(--border);
+            padding: 18px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
 
-.topbar {
-    background: white;
-    border-bottom: 1px solid var(--border);
-    padding: 18px 40px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
+        .topbar h1 {
+            font-size: 18px;
+            margin: 0;
+        }
 
-.topbar h1 {
-    font-size: 18px;
-    margin: 0;
-}
+        .topbar small {
+            color: var(--muted);
+        }
 
-.topbar small { color: var(--muted); }
+        .content {
+            padding: 40px;
+        }
 
-.content { padding: 40px; }
+        /* =========================
+           UTILITY CARDS
+        ========================= */
 
-/* ===== Utility Cards ===== */
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 24px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+        }
 
-.card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 24px;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
-}
+        /* =========================
+           GRID SYSTEM
+        ========================= */
 
-/* ===== Grid System ===== */
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
 
-.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
-.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-.grid-2 { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
 
-/* ===== Tables ===== */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
 
-.table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 14px;
-}
+        /* =========================
+           TABLES
+        ========================= */
 
-.table th {
-    text-align: left;
-    padding: 12px;
-    background: #f8fafc;
-    font-weight: 500;
-    color: var(--muted);
-    border-bottom: 1px solid var(--border);
-}
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
 
-.table td {
-    padding: 12px;
-    border-bottom: 1px solid var(--border);
-}
+        .table th {
+            text-align: left;
+            padding: 12px;
+            background: #f8fafc;
+            font-weight: 500;
+            color: var(--muted);
+            border-bottom: 1px solid var(--border);
+        }
 
-/* ===== Badges ===== */
+        .table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+        }
 
-.badge {
-    padding: 4px 8px;
-    border-radius: 6px;
-    font-size: 12px;
-    font-weight: 500;
-}
+        /* =========================
+           BADGES
+        ========================= */
 
-.badge-danger { background: #fee2e2; color: var(--danger); }
-.badge-warning { background: #fef3c7; color: var(--warning); }
-.badge-success { background: #dcfce7; color: #16a34a; }
+        .badge {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+        }
 
-/* =========================
-   RESPONSIVE
-========================= */
+        .badge-danger {
+            background: #fee2e2;
+            color: var(--danger);
+        }
 
-@media (max-width: 1024px) {
-    .grid-4 { grid-template-columns: repeat(2, 1fr); }
-    .grid-3 { grid-template-columns: repeat(2, 1fr); }
-    .grid-2 { grid-template-columns: 1fr; }
-}
+        .badge-warning {
+            background: #fef3c7;
+            color: var(--warning);
+        }
 
-@media (max-width: 768px) {
-    body { flex-direction: column; }
-    .sidebar { position: relative; width: 100%; height: auto; }
-    .main { margin-left: 0; }
-    .content { padding: 20px; }
-    .grid-4, .grid-3 { grid-template-columns: 1fr; }
-}
-</style>
+        .badge-success {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+
+        /* =========================
+           RESPONSIVE
+        ========================= */
+
+        @media (max-width: 1024px) {
+
+            .grid-4 {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .grid-3 {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+
+            body {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                position: relative;
+                width: 100%;
+                height: auto;
+            }
+
+            .main {
+                margin-left: 0;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .grid-4,
+            .grid-3 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+    </style>
+
 </head>
 
 <body>
 
-{% set path = request.url.path if request else "" %}
+    {% set path = request.url.path if request else "" %}
+    {% set cu = current_user if current_user is defined else None %}
 
-<div class="sidebar">
+    <!-- =========================================================
+         SIDEBAR
+    ========================================================== -->
 
-    <div class="brand">
-        <div class="brand-badge"></div>
-        <h2>NAIROBIAN HUB</h2>
-    </div>
+    <div class="sidebar">
 
-    <!-- USER PANEL -->
-    <div class="user-panel">
-        {% set cu = current_user %}
-        <small>{{ cu.username if cu else "" }}</small>
+        <!-- BRAND -->
+
+        <div class="brand">
+
+            <div class="brand-badge"></div>
+
+            <h2>NAIROBIAN HUB</h2>
+
+        </div>
+
+
+        <!-- USER PANEL -->
+
+        <div class="user-panel">
+
+            {% if cu %}
+
+                <small>
+                    {{ cu.username }}
+                </small>
+
+                {% if cu.role == "admin" %}
+
+                    <span class="role-badge role-admin">
+                        ADMIN
+                    </span>
+
+                {% elif cu.role == "manager" %}
+
+                    <span class="role-badge role-manager">
+                        MANAGER
+                    </span>
+
+                    {% if cu.branch %}
+                        <small>
+                            Branch: {{ cu.branch.name }}
+                        </small>
+                    {% endif %}
+
+                {% elif cu.role == "storekeeper" %}
+
+                    <span class="role-badge role-storekeeper">
+                        STOREKEEPER
+                    </span>
+
+                    {% if cu.branch %}
+                        <small>
+                            Branch: {{ cu.branch.name }}
+                        </small>
+                    {% endif %}
+
+                {% elif cu.role == "superadmin" %}
+
+                    <span class="role-badge role-admin">
+                        SUPERADMIN
+                    </span>
+
+                {% endif %}
+
+            {% endif %}
+
+        </div>
+
+
+        <!-- =====================================================
+             OVERVIEW
+        ====================================================== -->
+
+        <div class="sidebar-section">
+            Overview
+        </div>
+
+        <div class="nav">
+
+            {% if cu and cu.role in ["admin", "manager"] %}
+
+                <a
+                    href="/inventory/dashboard"
+                    class="{% if path.startswith('/inventory/dashboard') %}active{% endif %}"
+                >
+                    Dashboard
+                </a>
+
+            {% elif cu and cu.role == "storekeeper" %}
+
+                <a
+                    href="/auth/dashboard"
+                    class="{% if path.startswith('/auth/dashboard') %}active{% endif %}"
+                >
+                    Dashboard
+                </a>
+
+            {% endif %}
+
+        </div>
+
+
+        <!-- =====================================================
+             INVENTORY
+        ====================================================== -->
+
+        <div class="sidebar-section">
+            Inventory
+        </div>
+
+        <div class="nav">
+
+            <!-- ADMIN + MANAGER -->
+
+            {% if cu and cu.role in ["admin", "manager"] %}
+
+                <a
+                    href="/inventory/products"
+                    class="{% if path.startswith('/inventory/products') %}active{% endif %}"
+                >
+                    Products
+                </a>
+
+                <a
+                    href="/inventory/add_product"
+                    class="{% if path.startswith('/inventory/add_product') %}active{% endif %}"
+                >
+                    Add Products
+                </a>
+
+                <a
+                    href="/inventory/restock"
+                    class="{% if path.startswith('/inventory/restock') %}active{% endif %}"
+                >
+                    Re-stock
+                </a>
+
+            {% endif %}
+
+
+            <!-- ADMIN + STOREKEEPER -->
+
+            {% if cu and cu.role in ["admin", "storekeeper"] %}
+
+                <a
+                    href="/inventory/assign"
+                    class="{% if path.startswith('/inventory/assign') %}active{% endif %}"
+                >
+                    Assign Stock
+                </a>
+
+            {% endif %}
+
+        </div>
+
+
+        <!-- =====================================================
+             SALES
+        ====================================================== -->
+
+        <div class="sidebar-section">
+            Sales
+        </div>
+
+        <div class="nav">
+
+            {% if cu and cu.role in ["admin", "manager", "storekeeper"] %}
+
+                <a
+                    href="/sales/recordsale"
+                    class="{% if path.startswith('/sales/recordsale') %}active{% endif %}"
+                >
+                    Record Sale
+                </a>
+
+            {% endif %}
+
+
+            {% if cu and cu.role == "admin" %}
+
+                <a
+                    href="/sales/salesreport"
+                    class="{% if path.startswith('/sales/salesreport') %}active{% endif %}"
+                >
+                    Sales Report
+                </a>
+
+            {% endif %}
+
+        </div>
+
+
+        <!-- =====================================================
+             MANAGEMENT
+             ADMIN ONLY
+        ====================================================== -->
+
         {% if cu and cu.role == "admin" %}
-            <span class="role-badge role-admin">ADMIN</span>
-        {% elif current_user.role == "manager" %}
-            <span class="role-badge role-manager">MANAGER</span>
-            {% if current_user.branch %}
-                <small>Branch: {{ current_user.branch.name }}</small>
-            {% endif %}
-        {% elif current_user.role == "storekeeper" %}
-            <span class="role-badge role-storekeeper">STOREKEEPER</span>
-            {% if current_user.branch %}
-                <small>Branch: {{ current_user.branch.name }}</small>
-            {% endif %}
-        {% endif %}
-    </div>
 
-    <!-- OVERVIEW -->
-    <div class="sidebar-section">Overview</div>
-    <div class="nav">
-        <a href="/inventory/dashboard"
-           class="{% if path.startswith('/inventory/dashboard') %}active{% endif %}">
-           Dashboard
-        </a>
-    </div>
+            <div class="sidebar-section">
+                Management
+            </div>
 
-    <!-- INVENTORY -->
-    <div class="sidebar-section">Inventory</div>
-    <div class="nav">
+            <div class="nav">
 
-        <a href="/inventory/products"
-           class="{% if path.startswith('/inventory/products') %}active{% endif %}">
-           Products
-        </a>
+                <a
+                    href="/auth/manage_user"
+                    class="{% if path.startswith('/auth/manage_user') %}active{% endif %}"
+                >
+                    Manage Users
+                </a>
 
-        {% if current_user.role in ["admin", "manager"] %}
-        <a href="/inventory/add_product"
-           class="{% if path.startswith('/inventory/add_product') %}active{% endif %}">
-           Add Products
-        </a>
+                <a
+                    href="/auth/manage_staff"
+                    class="{% if path.startswith('/auth/manage_staff') %}active{% endif %}"
+                >
+                    Manage Staff
+                </a>
 
-        <a href="/inventory/restock"
-           class="{% if path.startswith('/inventory/restock') %}active{% endif %}">
-           Re-stock
-        </a>
+                <a
+                    href="/inventory/manage_branches"
+                    class="{% if path.startswith('/inventory/manage_branches') %}active{% endif %}"
+                >
+                    Manage Branches
+                </a>
+
+            </div>
+
         {% endif %}
 
-        {% if current_user.role in ["admin", "storekeeper"] %}
-        <a href="/inventory/assign"
-           class="{% if path.startswith('/inventory/assign') %}active{% endif %}">
-           Assign Stock
-        </a>
-        {% endif %}
-    </div>
 
-    <!-- MANAGEMENT (ADMIN ONLY) -->
-    {% if current_user.role == "admin" %}
-    <div class="sidebar-section">Management</div>
-    <div class="nav">
-        <a href="/auth/manage_user"
-           class="{% if path.startswith('/auth/manage_user') %}active{% endif %}">
-           Manage Users
-        </a>
+        <!-- =====================================================
+             FOOTER
+        ====================================================== -->
 
-        <a href="/auth/manage_staff"
-           class="{% if path.startswith('/auth/manage_staff') %}active{% endif %}">
-           Manage Staff
-        </a>
+        <div class="sidebar-footer">
 
-        <a href="/inventory/manage_branches"
-           class="{% if path.startswith('/inventory/manage_branches') %}active{% endif %}">
-           Manage Branches
-        </a>
-    </div>
-    {% endif %}
+            <a href="/auth/logout">
+                Logout
+            </a>
 
-    <div class="sidebar-footer">
-        <a href="/auth/logout">Logout</a>
-    </div>
-</div>
-
-<div class="main">
-
-    <div class="topbar">
-        <div>
-            <h1>{% block page_title %}Dashboard{% endblock %}</h1>
-            <small>Business inventory system</small>
         </div>
-        <div>
-          {% set cu = current_user %}
-           <small>{{ cu.username if cu else "" }}</small>
+
+    </div>
+
+
+    <!-- =========================================================
+         MAIN CONTENT
+    ========================================================== -->
+
+    <div class="main">
+
+        <div class="topbar">
+
+            <div>
+
+                <h1>
+                    {% block page_title %}
+                        Dashboard
+                    {% endblock %}
+                </h1>
+
+                <small>
+                    Business inventory system
+                </small>
+
+            </div>
+
+
+            <div>
+
+                {% if cu %}
+
+                    <small>
+                        {{ cu.username }}
+                    </small>
+
+                {% endif %}
+
+            </div>
+
         </div>
-    </div>
 
-    <div class="content">
-        {% block content %}{% endblock %}
-    </div>
 
-</div>
+        <div class="content">
+
+            {% block content %}{% endblock %}
+
+        </div>
+
+    </div>
 
 </body>
+
 </html>
