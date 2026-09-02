@@ -66,6 +66,7 @@ def get_dashboard(
         "index.html",
         {
             "request": request,
+            "current_user": current_user,
             "username": current_user.username,
             "business_name": business_name,
             "last_login": current_user.last_login,
